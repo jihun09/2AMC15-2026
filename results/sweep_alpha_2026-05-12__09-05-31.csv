@@ -1,0 +1,6 @@
+alpha,mean_return_last10pct,std_return_last10pct,episodes_to_zero_return_mean,episodes_to_zero_return_std,success_rate_last10pct
+0.01,-146.814,1.426907144841605,nan,0.0,1.0
+0.05,-38.542,1.6038628370281527,nan,0.0,1.0
+0.1,-34.698,2.5076076248089527,nan,0.0,1.0
+0.3,-37.58,1.4248789422263217,nan,0.0,1.0
+0.5,-44.172,2.346498668228901,nan,0.0,1.0

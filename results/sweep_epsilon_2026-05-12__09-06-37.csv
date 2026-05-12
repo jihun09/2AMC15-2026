@@ -1,0 +1,5 @@
+schedule,mean_return_last10pct,std_return_last10pct,success_rate_last10pct,episodes_to_positive_return_mean
+fixed_0.05,-28.792,0.5573293460782417,1.0,nan
+fixed_0.10,-34.698,2.5076076248089527,1.0,nan
+fixed_0.30,-81.366,12.555740679067883,0.994,nan
+decay_0.30->0.05,-29.432,1.491152574353141,1.0,nan
