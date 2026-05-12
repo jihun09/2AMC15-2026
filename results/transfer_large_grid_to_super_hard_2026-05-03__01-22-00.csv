@@ -1,0 +1,3 @@
+scenario,mean_return,std_return,success_rate,mean_steps
+eval on train grid,-460.79,410.11936174728453,0.4,307.118
+eval on test grid,-2392.12,9.565705410475534,0.0,500.0
