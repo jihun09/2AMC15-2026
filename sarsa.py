@@ -177,6 +177,34 @@ def train_agent(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
     return agent, returns, steps, successes, convergence_episode
 
 
+def train_sarsa(grid_path, start_pos, setup: dict, seed: int,
+                patience: int):
+    """Uniform adapter for run_matrix.py.
+
+    `setup` keys: alpha, gamma, epsilon, epsilon_end, epsilon_decay_episodes,
+                  sigma_train, episodes, max_steps, shaping_weight, q_init.
+    Returns (trained_agent, convergence_episode_or_None).
+    """
+    agent, _r, _s, _c, conv = train_agent(
+        grid_path, start_pos,
+        algo="sarsa",
+        alpha=setup["alpha"],
+        gamma=setup["gamma"],
+        epsilon=setup["epsilon"],
+        epsilon_end=setup.get("epsilon_end"),
+        epsilon_decay_episodes=setup.get("epsilon_decay_episodes", 1),
+        sigma=setup["sigma_train"],
+        episodes=setup["episodes"],
+        max_steps=setup["max_steps"],
+        q_init=setup.get("q_init"),
+        seed=seed,
+        track_per_episode=True,
+        shaping_weight=setup.get("shaping_weight", 0.0),
+        patience=patience,
+    )
+    return agent, conv
+
+
 def run_random(grid_path, start, *, sigma, episodes, max_steps, seed=0, desc=None):
     """Run RandomAgent for `episodes` episodes (no learning). Returns the
     4-tuple `(None, returns, steps, successes)`; the leading `None` keeps
