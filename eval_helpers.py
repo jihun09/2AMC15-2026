@@ -37,7 +37,7 @@ def policy_optimality_ratio(
     POR = bfs_optimal_steps / mean(actual_steps).  Bounded [0, 1] when
     sigma_eval == 0 and the agent reaches the target.
     """
-    from world import Environment   # late import to avoid pulling pygame on test discovery
+    from world.environment import Environment   # direct import bypasses world/__init__.py (which pulls pygame via gui)
     from world.grid import Grid
 
     grid_cells = Grid.load_grid(grid_path).cells

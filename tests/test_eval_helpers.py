@@ -53,9 +53,6 @@ def test_bfs_optimal_steps_unreachable_raises():
         bfs_optimal_steps(grid, (1, 0))
 
 
-import tempfile
-
-
 class StraightLineAgent:
     """Deterministic stub: always takes action 0 (col+1 in numpy = moves right
     along the corridor in the test grid).
