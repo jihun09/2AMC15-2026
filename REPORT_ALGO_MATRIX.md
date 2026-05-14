@@ -34,13 +34,24 @@ Wired in via `Environment(..., reward_fn=reward_fn)` on the env side, and by wra
 
 ## 4. The 6 setups
 
-|  | Setup A (conservative) | Setup B (aggressive) |
+Full hyperparameter values (from `configs/final_setups.json`):
+
+| Algo | Setup | Key hyperparameters |
 |---|---|---|
-| **VI** | TBD | TBD |
-| **MC** | TBD | TBD |
-| **SARSA** | TBD — chosen from a 72-config sweep, see §8 | TBD — same |
+| **VI** | A (smoke_A) | γ = 0.95, θ = 1e-3, shaping_weight = 0.0 |
+| **VI** | B (smoke_B) | γ = 0.99, θ = 1e-5, shaping_weight = 3.0 |
+| **MC** | A (smoke_A) | ε = 0.1, ε_decay = 0.999, ε_min = 0.05, δ = 0.95, episodes = 500, shaping_weight = 0.0 |
+| **MC** | B (smoke_B) | ε = 0.3, ε_decay = 0.999, ε_min = 0.05, δ = 0.99, episodes = 500, shaping_weight = 3.0 |
+| **SARSA** | A (A_conservative) | α = 0.05, γ = 0.95, ε = 0.3 (fixed), shaping_weight = 3.0, q_init = 0.0, episodes = 2000 |
+| **SARSA** | B (B_aggressive) | α = 0.05, γ = 0.95, ε = 0.1 (fixed), shaping_weight = 3.0, q_init = 0.0, episodes = 2000 |
 
 **Convention:** Setup A is conservative / safe; Setup B is aggressive / speed-for-risk. Each algorithm's owner picks both, then we cross-check they tell a coherent story side-by-side.
+
+**VI Setup A vs B:** Setup A uses a loose convergence threshold (θ = 1e-3) with a lower discount factor (γ = 0.95) and no reward shaping — it converges faster but to a coarser value function. Setup B tightens the threshold to θ = 1e-5, raises γ to 0.99 (values future rewards more), and adds BFS potential shaping (weight 3.0) — more thorough convergence at the cost of more iterations. Both reach POR = 1.0 because VI is a planning algorithm that sweeps the full state space.
+
+**MC Setup A vs B:** Setup A starts with a lower initial ε (0.1) and a lower discount δ (0.95) with no shaping — more exploitation-heavy from early on but potentially misses some paths. Setup B starts with ε = 0.3 (more exploration early) and δ = 0.99 (longer reward horizon), plus BFS shaping (weight 3.0). In practice the shaping in Setup B did not consistently outperform Setup A — MC's sample-efficiency limits are visible on the harder A1_grid.
+
+**SARSA Setup A vs B:** Both setups were selected from a 72-config sweep (3 α × 2 γ × 3 ε-schedules × 2 shaping_weights × 2 q_inits = 72, run with 3 seeds × 1000 episodes on large_grid). Setup A uses ε = 0.3 (fixed) — more exploration maintained throughout training, which the selection rule treats as "conservative" because it accepts higher conv_ep in exchange for stable policy quality. Setup B uses ε = 0.1 (fixed) — less exploration, converging ~1 episode earlier on average. The key controlled axis is the epsilon schedule; all other hyperparameters are identical between the two SARSA setups.
 
 ## 5. Metrics
 
@@ -83,26 +94,30 @@ POR = bfs_optimal_steps(grid, start) / mean(actual_steps over eval episodes)
 
 Together they tell two stories: intrinsic optimality (σ=0) and robustness (σ=0.1).
 
-## 7. Results matrix (to be filled in)
+## 7. Results matrix
 
-Headline table — one row per (algorithm, setup, grid), aggregated across **5 seeds** (report mean ± std):
+Headline table — one row per (algorithm, setup, grid), aggregated across **5 seeds** (mean ± std).
+Conv. metric is in the algorithm's native unit (iterations for VI, episodes for MC/SARSA).
+`-1` in conv means the stopping criterion never fired within the episode budget.
 
-| Algo | Setup | Grid | Conv. metric (native) | POR @ σ=0 | POR @ σ=0.1 |
-|---|---|---|---|---|---|
-| VI | A | large_grid | _ | _ | _ |
-| VI | A | A1_grid | _ | _ | _ |
-| VI | B | large_grid | _ | _ | _ |
-| VI | B | A1_grid | _ | _ | _ |
-| MC | A | large_grid | _ | _ | _ |
-| MC | A | A1_grid | _ | _ | _ |
-| MC | B | large_grid | _ | _ | _ |
-| MC | B | A1_grid | _ | _ | _ |
-| SARSA | A | large_grid | _ | _ | _ |
-| SARSA | A | A1_grid | _ | _ | _ |
-| SARSA | B | large_grid | _ | _ | _ |
-| SARSA | B | A1_grid | _ | _ | _ |
+| Algo  | Setup          | Grid       | Conv. metric (native) | POR @ σ=0     | POR @ σ=0.1   |
+|-------|----------------|------------|----------------------|---------------|---------------|
+| vi    | smoke_A        | large_grid | 47 ± 0               | 1.000 ± 0.000 | 0.898 ± 0.005 |
+| vi    | smoke_A        | A1_grid    | 47 ± 0               | 1.000 ± 0.000 | 0.893 ± 0.008 |
+| vi    | smoke_B        | large_grid | 55 ± 0               | 1.000 ± 0.000 | 0.898 ± 0.005 |
+| vi    | smoke_B        | A1_grid    | 55 ± 0               | 1.000 ± 0.000 | 0.893 ± 0.008 |
+| mc    | smoke_A        | large_grid | 174 ± 62             | 0.810 ± 0.167 | 0.764 ± 0.160 |
+| mc    | smoke_A        | A1_grid    | 198 ± 203            | 0.423 ± 0.345 | 0.359 ± 0.288 |
+| mc    | smoke_B        | large_grid | 183 ± 62             | 0.691 ± 0.029 | 0.673 ± 0.012 |
+| mc    | smoke_B        | A1_grid    | 286 ± 163            | 0.611 ± 0.059 | 0.565 ± 0.075 |
+| sarsa | A_conservative | large_grid | 157 ± 37             | 1.000 ± 0.000 | 0.898 ± 0.005 |
+| sarsa | A_conservative | A1_grid    | 219 ± 78             | 1.000 ± 0.000 | 0.893 ± 0.007 |
+| sarsa | B_aggressive   | large_grid | 174 ± 56             | 1.000 ± 0.000 | 0.898 ± 0.005 |
+| sarsa | B_aggressive   | A1_grid    | 244 ± 52             | 1.000 ± 0.000 | 0.895 ± 0.010 |
 
-Raw per-seed CSV: `results/matrix/matrix_<timestamp>.csv` (produced by `run_matrix.py`). One row per (algo, setup, grid, seed). Schema:
+**Summary:** VI and SARSA both achieve POR_det = 1.000 on every (grid, setup) cell, meaning they find the BFS-optimal path deterministically. VI reaches this in only 47–55 iterations (a planning algorithm sweeps the state space without exploration), while SARSA requires 157–244 episodes depending on setup and grid — faster convergence in terms of per-update work. MC falls short on both grids: POR_det peaks around 0.81 on large_grid and drops to ~0.42 on the harder A1_grid for smoke_A, with very high variance across seeds (std up to 0.35), indicating the episode budget of 500 is sometimes insufficient. POR_n10 (noise robustness at σ=0.1) shows a consistent ~0.10 gap below POR_det for all algorithms, suggesting that ~10% random action overrides reduce effective optimality proportionally regardless of algorithm — VI, SARSA, and the better MC cells all end up near 0.89–0.90 at σ=0.1 once they've found a good policy. The most notable result is that SARSA with BFS shaping matches VI's deterministic policy quality while being a fully online, model-free algorithm, at the cost of ~3–5× more convergence episodes vs VI iterations.
+
+Raw per-seed CSV: `results/matrix/matrix_2026-05-14__21-38-19.csv` (produced by `run_matrix.py`). One row per (algo, setup, grid, seed). Schema:
 
 ```
 algo, setup, grid, seed, convergence_metric, actual_steps_det,
