@@ -92,7 +92,7 @@ def train_agent(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
                 epsilon_end=None, epsilon_decay_episodes=1, lambda_=None,
                 sigma, episodes, max_steps, q_init=None,
                 random_start=False, seed=0, track_per_episode=True,
-                desc=None, shaping_weight=0.0):
+                desc=None, shaping_weight=0.0, patience: int = 0):
     """Train one of {sarsa, qlearning, sarsa-lambda}. Returns
     (agent, returns, steps, successes) arrays of length `episodes` when
     track_per_episode=True, otherwise (agent, None, None, None).
@@ -111,6 +111,10 @@ def train_agent(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
                        epsilon_decay_episodes=epsilon_decay_episodes,
                        lambda_=lambda_,
                        q_init=q_init, seed=seed)
+
+    prev_greedy_hash = None
+    stable_count = 0
+    convergence_episode: int | None = None
 
     returns = np.zeros(episodes) if track_per_episode else None
     steps = np.zeros(episodes, dtype=int) if track_per_episode else None
@@ -148,7 +152,23 @@ def train_agent(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
             returns[ep] = ep_return
             steps[ep] = ep_steps
             successes[ep] = int(success)
-    return agent, returns, steps, successes
+        # Greedy-policy stability check (only meaningful when agent exposes Q).
+        if patience > 0 and hasattr(agent, "Q") and agent.Q:
+            cur_hash = tuple(int(np.argmax(agent.Q[s]))
+                             for s in sorted(agent.Q.keys()))
+            if cur_hash == prev_greedy_hash:
+                stable_count += 1
+            else:
+                stable_count = 0
+            prev_greedy_hash = cur_hash
+            if stable_count >= patience and convergence_episode is None:
+                convergence_episode = ep + 1
+                if track_per_episode:
+                    returns = returns[: ep + 1]
+                    steps = steps[: ep + 1]
+                    successes = successes[: ep + 1]
+                break
+    return agent, returns, steps, successes, convergence_episode
 
 
 def run_random(grid_path, start, *, sigma, episodes, max_steps, seed=0, desc=None):
@@ -247,7 +267,7 @@ def cmd_train(args):
     for grid_path in args.GRID:
         start = parse_start_pos(args.start_pos) or lock_start(grid_path, args.seed)
         t0 = time.time()
-        agent, returns, steps, succ = train_agent(
+        agent, returns, steps, succ, _conv = train_agent(
             grid_path, start,
             alpha=args.alpha, gamma=args.gamma, epsilon=args.epsilon,
             epsilon_end=args.epsilon_end,
@@ -299,7 +319,7 @@ def cmd_compare(args):
                       max_steps=args.max_steps, seed=seed,
                       desc=f"{agent_kind} seed={seed}")
             if agent_kind == "SARSA":
-                _, r, s, c = train_agent(
+                _, r, s, c, _ = train_agent(
                     grid_path, start, alpha=args.alpha, gamma=args.gamma,
                     epsilon=args.epsilon, epsilon_end=args.epsilon_end,
                     epsilon_decay_episodes=args.epsilon_decay_episodes,
@@ -406,7 +426,7 @@ def cmd_sweep(args):
             kwargs = dict(alpha=args.alpha, gamma=args.gamma,
                           epsilon=args.epsilon, sigma=args.sigma)
             kwargs[param] = v
-            _, r, _, c = train_agent(
+            _, r, _, c, _ = train_agent(
                 grid_path, start,
                 **kwargs, episodes=args.episodes, max_steps=args.max_steps,
                 seed=seed,
@@ -496,7 +516,7 @@ def cmd_sweep_eps(args):
         ret = np.zeros((args.seeds, args.episodes))
         suc = np.zeros((args.seeds, args.episodes), dtype=int)
         for seed in trange(args.seeds, desc=label):
-            _, r, _, c = train_agent(
+            _, r, _, c, _ = train_agent(
                 grid_path, start,
                 alpha=args.alpha, gamma=args.gamma,
                 epsilon=eps0, epsilon_end=eps_end, epsilon_decay_episodes=decay_eps,
