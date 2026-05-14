@@ -27,6 +27,10 @@ def test_patience_triggers_on_easy_grid(tmp_path):
     )
     assert conv_ep is not None, "convergence_episode should be set"
     assert conv_ep < 1000, f"expected early stop, got {conv_ep}"
+    # Truncation: returned arrays must be exactly conv_ep long.
+    assert len(returns) == conv_ep
+    assert len(steps) == conv_ep
+    assert len(succ) == conv_ep
 
 
 def test_patience_disabled_returns_none(tmp_path):

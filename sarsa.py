@@ -93,9 +93,15 @@ def train_agent(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
                 sigma, episodes, max_steps, q_init=None,
                 random_start=False, seed=0, track_per_episode=True,
                 desc=None, shaping_weight=0.0, patience: int = 0):
-    """Train one of {sarsa, qlearning, sarsa-lambda}. Returns
-    (agent, returns, steps, successes) arrays of length `episodes` when
-    track_per_episode=True, otherwise (agent, None, None, None).
+    """Train one of {sarsa, qlearning, sarsa-lambda}.
+
+    Returns the 5-tuple `(agent, returns, steps, successes, convergence_episode)`.
+    `returns`, `steps`, and `successes` are length-`episodes` arrays when
+    `track_per_episode=True`, otherwise `None`. `convergence_episode` is
+    `None` when `patience=0` or the policy never stabilized; otherwise it
+    is the 1-indexed episode at which the greedy policy was stable for
+    `patience` consecutive transitions, and the returned arrays are
+    truncated to that length.
     """
     random.seed(seed); np.random.seed(seed)
     env_start = None if random_start else start
@@ -172,7 +178,11 @@ def train_agent(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
 
 
 def run_random(grid_path, start, *, sigma, episodes, max_steps, seed=0, desc=None):
-    """Run RandomAgent for `episodes` episodes (no learning). Returns same shape as train_agent."""
+    """Run RandomAgent for `episodes` episodes (no learning). Returns the
+    4-tuple `(None, returns, steps, successes)`; the leading `None` keeps
+    the call-site shape similar to `train_agent` but the new
+    `convergence_episode` field is not produced (RandomAgent does not
+    learn, so there is nothing to stabilize)."""
     random.seed(seed); np.random.seed(seed)
     env = make_env(grid_path, sigma, seed, start)
     env.reset()
