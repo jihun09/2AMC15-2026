@@ -1,0 +1,14 @@
+{
+  "sarsa": [
+    {"label": "smoke_A", "alpha": 0.1, "gamma": 0.95, "epsilon": 0.1, "epsilon_end": null, "epsilon_decay_episodes": 1, "sigma_train": 0.1, "episodes": 500, "max_steps": 500, "shaping_weight": 0.0, "q_init": 0.0},
+    {"label": "smoke_B", "alpha": 0.3, "gamma": 0.99, "epsilon": 0.3, "epsilon_end": 0.05, "epsilon_decay_episodes": 350, "sigma_train": 0.1, "episodes": 500, "max_steps": 500, "shaping_weight": 3.0, "q_init": 1.0}
+  ],
+  "mc": [
+    {"label": "smoke_A", "epsilon": 0.1, "epsilon_decay": 0.999, "epsilon_min": 0.05, "delta": 0.95, "episodes": 500, "max_steps": 500, "sigma_train": 0.1, "shaping_weight": 0.0},
+    {"label": "smoke_B", "epsilon": 0.3, "epsilon_decay": 0.999, "epsilon_min": 0.05, "delta": 0.99, "episodes": 500, "max_steps": 500, "sigma_train": 0.1, "shaping_weight": 3.0}
+  ],
+  "vi": [
+    {"label": "smoke_A", "gamma": 0.95, "theta": 1e-3, "sigma_plan": 0.1, "shaping_weight": 0.0},
+    {"label": "smoke_B", "gamma": 0.99, "theta": 1e-5, "sigma_plan": 0.1, "shaping_weight": 3.0}
+  ]
+}

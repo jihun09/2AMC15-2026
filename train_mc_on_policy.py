@@ -194,3 +194,81 @@ if __name__ == '__main__':
     main(args.GRID, args.no_gui, args.iter, args.fps, args.sigma,
          args.random_seed, start_pos, args.episodes, args.delta, args.epsilon,
          args.epsilon_decay, args.epsilon_min, args.patience, args.shaping_weight)
+
+
+def train_mc(grid_path, start_pos, setup: dict, seed: int, patience: int):
+    """Uniform adapter for run_matrix.py.
+
+    Wraps the existing main() training loop into a function that returns
+    (trained_agent, convergence_episode).
+    `setup` keys: epsilon, epsilon_decay, epsilon_min, delta (or gamma),
+                  episodes, max_steps, shaping_weight, sigma_train.
+    """
+    env = Environment(
+        grid_fp=grid_path, no_gui=True,
+        sigma=setup.get("sigma_train", 0.1),
+        target_fps=-1, agent_start_pos=start_pos,
+        random_seed=seed, reward_fn=reward_fn,
+    )
+    grid_cells = Grid.load_grid(grid_path).cells
+    dist = compute_bfs_distances(grid_cells)
+
+    agent = McOnPolicyAgent(
+        epsilon=setup["epsilon"],
+        epsilon_decay=setup.get("epsilon_decay", 0.999),
+        epsilon_min=setup.get("epsilon_min", 0.05),
+    )
+    agent.create_state_action_space(grid_cells)
+    indx_position = agent.state_action_indexer
+
+    prev_greedy = None
+    stable_count = 0
+    convergence_episode = None
+    delta = setup.get("delta", setup.get("gamma", 0.95))
+    sw = setup.get("shaping_weight", 0.0)
+
+    for ep in range(setup["episodes"]):
+        env.reset()
+        look_up = agent.look_up_first_visited()
+        state = env.agent_pos
+        states, actions_taken, rewards = [], [], []
+
+        for step in range(setup["max_steps"]):
+            state_idx = indx_position[state]
+            action = agent.take_action(state)
+            new_state, reward, terminated, info = env.step(action)
+            actual_action = info["actual_action"]
+            if sw:
+                reward = shaped_reward(reward, state, new_state,
+                                       terminated, dist, sw)
+            key = (state_idx, actual_action)
+            if key in look_up:
+                if look_up[key] == -1:
+                    look_up[key] = len(rewards)
+                states.append(state)
+                actions_taken.append(actual_action)
+                rewards.append(reward)
+            state = new_state
+            if terminated:
+                break
+
+        g = 0.0
+        for i in range(len(rewards) - 1, -1, -1):
+            g = delta * g + rewards[i]
+            si, ai = states[i], actions_taken[i]
+            key = (indx_position[si], ai)
+            if look_up[key] == i:
+                agent.update(si, g, ai)
+        agent.decay_epsilon()
+
+        cur_greedy = agent.get_greedy_action()
+        if cur_greedy == prev_greedy:
+            stable_count += 1
+        else:
+            stable_count = 0
+        prev_greedy = cur_greedy
+        if stable_count >= patience and convergence_episode is None:
+            convergence_episode = ep + 1
+            break
+
+    return agent, convergence_episode
