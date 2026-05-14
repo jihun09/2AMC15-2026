@@ -1,9 +1,9 @@
 """SARSA Agent.
 
 Tabular on-policy TD control. Uses an extended training interface
-(`select_action` + `learn`) called from `train_sarsa.py`. The thin
-abstract methods inherited from `BaseAgent` are kept compatible so the
-class still satisfies the ABC, but they are not the real entry points.
+(`select_action` + `learn`) called from `sarsa.py`'s `train_agent`. The
+thin abstract methods inherited from `BaseAgent` are kept compatible so
+the class still satisfies the ABC, but they are not the real entry points.
 """
 from collections import defaultdict
 import random
@@ -25,11 +25,12 @@ class SARSAAgent(BaseAgent):
     def __init__(
         self,
         n_actions: int = 4,
-        alpha: float = 0.3,
+        alpha: float = 0.1,
         gamma: float = 0.95,
         epsilon: float = 0.1,
         epsilon_end: float | None = None,
         epsilon_decay_episodes: int = 1,
+        q_init: float | None = None,
         rng_seed: int | None = None,
     ):
         """
@@ -42,6 +43,9 @@ class SARSAAgent(BaseAgent):
         epsilon_decay_episodes — number of episodes over which the decay
                                  happens. Decay schedule is linear and
                                  clamps at the end value thereafter.
+        q_init                 — optional initial Q-value for every (s, a).
+                                 If None (default), Q starts at 0. Set to a
+                                 positive value for optimistic initialization.
         """
         super().__init__()
         self.n_actions = n_actions
@@ -51,7 +55,10 @@ class SARSAAgent(BaseAgent):
         self.epsilon_end = epsilon_end if epsilon_end is not None else epsilon
         self.epsilon_decay_episodes = max(1, epsilon_decay_episodes)
         self._episode_count = 0
-        self.Q: dict = defaultdict(lambda: np.zeros(self.n_actions))
+        init_val = 0.0 if q_init is None else float(q_init)
+        self.Q: dict = defaultdict(
+            lambda: np.full(self.n_actions, init_val, dtype=float)
+        )
         self._rng = random.Random(rng_seed)
 
     # ---- episode bookkeeping (called by training loop) ----
@@ -73,7 +80,7 @@ class SARSAAgent(BaseAgent):
         frac = min(1.0, self._episode_count / self.epsilon_decay_episodes)
         return self.epsilon_start + (self.epsilon_end - self.epsilon_start) * frac
 
-    # ---- real training-time interface (called by train_sarsa.py) ----
+    # ---- real training-time interface (called by sarsa.py's train_agent) ----
 
     def select_action(self, state, training: bool = True) -> int:
         """Epsilon-greedy during training, greedy during evaluation.
@@ -108,7 +115,7 @@ class SARSAAgent(BaseAgent):
 
         Note: this is intentionally greedy (no exploration) so eval
         reflects the learned policy, not the exploring behavior policy.
-        For training, `train_sarsa.py` calls `select_action` directly.
+        For training, `sarsa.py`'s `train_agent` calls `select_action` directly.
         """
         return self.select_action(state, training=False)
 
@@ -121,6 +128,6 @@ class SARSAAgent(BaseAgent):
         """
         raise RuntimeError(
             "SARSAAgent.update was called via the thin BaseAgent interface. "
-            "Use train_sarsa.py, which calls SARSAAgent.learn(state, action, "
-            "reward, next_state, next_action, done) instead."
+            "Use sarsa.py's train_agent, which calls SARSAAgent.learn(state, "
+            "action, reward, next_state, next_action, done) instead."
         )

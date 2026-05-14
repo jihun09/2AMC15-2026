@@ -1,6 +1,7 @@
-"""SARSA training and experiments for 2AMC15 DIC.
+"""Tabular TD training and experiments for 2AMC15 DIC.
 
-Single entry point with subcommands. Replaces the previous 10 scripts:
+Single entry point with subcommands. Dispatches to SARSA, Q-learning, or
+SARSA(lambda) via the `algo` field. Replaces the previous 10 scripts:
   train_sarsa, experiment_sarsa, sweep_{alpha,gamma,sigma,epsilon},
   transfer_test, push_best, multi_grid_eval, rescue_super_hard.
 
@@ -16,7 +17,6 @@ Run `python sarsa.py <cmd> --help` for per-subcommand options.
 Use run_experiments.sh to reproduce all results in REPORT_SARSA.md.
 """
 from argparse import ArgumentParser
-from collections import defaultdict
 from pathlib import Path
 import csv
 import json
@@ -34,12 +34,14 @@ from world import Environment
 from agents.sarsa_agent import SARSAAgent
 from agents.qlearning_agent import QLearningAgent
 from agents.sarsa_lambda_agent import SARSALambdaAgent
+from agents.linear_sarsa_agent import LinearSARSAAgent
 from agents.random_agent import RandomAgent
 
 AGENT_CLASSES = {
     "sarsa": SARSAAgent,
     "qlearning": QLearningAgent,
     "sarsa-lambda": SARSALambdaAgent,
+    "linear-sarsa": LinearSARSAAgent,
 }
 
 
@@ -78,16 +80,13 @@ def make_agent(*, algo="sarsa", alpha, gamma, epsilon, epsilon_end=None,
     kwargs = dict(n_actions=4, alpha=alpha, gamma=gamma,
                   epsilon=epsilon, epsilon_end=epsilon_end,
                   epsilon_decay_episodes=epsilon_decay_episodes,
-                  rng_seed=seed)
+                  q_init=q_init, rng_seed=seed)
     if algo == "sarsa-lambda":
         kwargs["lambda_"] = lambda_ if lambda_ is not None else 0.9
-    agent = cls(**kwargs)
-    if q_init is not None:
-        agent.Q = defaultdict(lambda: np.full(agent.n_actions, q_init, dtype=float))
-    return agent
+    return cls(**kwargs)
 
 
-def train_sarsa(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
+def train_agent(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
                 epsilon_end=None, epsilon_decay_episodes=1, lambda_=None,
                 sigma, episodes, max_steps, q_init=None,
                 random_start=False, seed=0, track_per_episode=True,
@@ -118,6 +117,11 @@ def train_sarsa(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
         if ep > 0:
             env.reset()
         agent.start_episode()
+        # Function-approximation agents need the grid context (target
+        # position, obstacle map) refreshed each episode. Tabular agents
+        # don't implement set_context — duck-typed.
+        if hasattr(agent, "set_context"):
+            agent.set_context(env.grid)
         state = env.agent_pos
         action = agent.select_action(state, training=True)
         ep_return = 0.0
@@ -142,7 +146,7 @@ def train_sarsa(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
 
 
 def run_random(grid_path, start, *, sigma, episodes, max_steps, seed=0, desc=None):
-    """Run RandomAgent for `episodes` episodes (no learning). Returns same shape as train_sarsa."""
+    """Run RandomAgent for `episodes` episodes (no learning). Returns same shape as train_agent."""
     random.seed(seed); np.random.seed(seed)
     env = make_env(grid_path, sigma, seed, start)
     env.reset()
@@ -178,6 +182,10 @@ def eval_greedy(grid_path, agent, start, *, sigma, max_steps, seed=0):
     random.seed(seed + 10_000); np.random.seed(seed + 10_000)
     env = make_env(grid_path, sigma, seed + 10_000, start)
     state = env.reset()
+    # Function-approximation agents need the grid context for the
+    # *evaluation* grid (which may differ from the training grid).
+    if hasattr(agent, "set_context"):
+        agent.set_context(env.grid)
     for _ in range(max_steps):
         action = agent.take_action(state)
         state, _, term, _ = env.step(action)
@@ -194,13 +202,6 @@ def smooth(x, k=10):
     return np.convolve(x, np.ones(k) / k, mode="valid")
 
 
-def episodes_to_threshold(returns_per_ep, threshold=0.0):
-    """Earliest episode where smoothed return >= threshold; -1 if never."""
-    s = smooth(returns_per_ep, max(1, len(returns_per_ep) // 50))
-    above = np.where(s >= threshold)[0]
-    return int(above[0]) if len(above) > 0 else -1
-
-
 def out_path(out_dir, prefix, stamp, ext):
     return out_dir / f"{prefix}_{stamp}.{ext}"
 
@@ -210,6 +211,24 @@ def write_csv(path, fieldnames, rows):
         w = csv.DictWriter(f, fieldnames=fieldnames)
         w.writeheader()
         w.writerows(rows)
+
+
+def write_meta(csv_path, meta: dict):
+    """Write a sidecar JSON next to a CSV recording the hyperparameters
+    used to produce it. Path is the CSV path with `.csv` replaced by
+    `.meta.json`. Values that aren't JSON-serializable are stringified.
+    """
+    def jsonable(v):
+        if isinstance(v, Path):
+            return str(v)
+        try:
+            json.dumps(v)
+            return v
+        except TypeError:
+            return str(v)
+    out = {k: jsonable(v) for k, v in meta.items()}
+    meta_path = Path(str(csv_path).removesuffix(".csv") + ".meta.json")
+    meta_path.write_text(json.dumps(out, indent=2))
 
 
 # ====================================================================
@@ -222,7 +241,7 @@ def cmd_train(args):
     for grid_path in args.GRID:
         start = parse_start_pos(args.start_pos) or lock_start(grid_path, args.seed)
         t0 = time.time()
-        agent, returns, steps, succ = train_sarsa(
+        agent, returns, steps, succ = train_agent(
             grid_path, start,
             alpha=args.alpha, gamma=args.gamma, epsilon=args.epsilon,
             epsilon_end=args.epsilon_end,
@@ -237,6 +256,15 @@ def cmd_train(args):
                 for i in range(args.episodes)]
         path = out_path(args.out_dir, f"train_{grid_path.stem}", stamp, "csv")
         write_csv(path, ["episode", "return", "steps", "success"], rows)
+        write_meta(path, {
+            "cmd": "train", "grid": grid_path, "start_pos": start,
+            "algo": "sarsa", "alpha": args.alpha, "gamma": args.gamma,
+            "epsilon": args.epsilon, "epsilon_end": args.epsilon_end,
+            "epsilon_decay_episodes": args.epsilon_decay_episodes,
+            "sigma": args.sigma, "episodes": args.episodes,
+            "max_steps": args.max_steps, "q_init": args.q_init,
+            "seed": args.seed, "elapsed_sec": round(elapsed, 1),
+        })
         tail = max(1, int(0.1 * args.episodes))
         print(f"[{grid_path.stem}] {elapsed:.1f}s  "
               f"asymptotic return={returns[-tail:].mean():+.2f}  "
@@ -263,7 +291,7 @@ def cmd_compare(args):
                       max_steps=args.max_steps, seed=seed,
                       desc=f"{agent_kind} seed={seed}")
             if agent_kind == "SARSA":
-                _, r, s, c = train_sarsa(
+                _, r, s, c = train_agent(
                     grid_path, start, alpha=args.alpha, gamma=args.gamma,
                     epsilon=args.epsilon, epsilon_end=args.epsilon_end,
                     epsilon_decay_episodes=args.epsilon_decay_episodes,
@@ -324,6 +352,17 @@ def cmd_compare(args):
     plot_path = out_path(args.out_dir, "compare_sarsa_vs_random", stamp, "png")
     plt.savefig(plot_path, dpi=120); plt.close(fig)
 
+    write_meta(csv_path, {
+        "cmd": "compare", "grid": grid_path, "start_pos": start,
+        "alpha": args.alpha, "gamma": args.gamma, "epsilon": args.epsilon,
+        "epsilon_end": args.epsilon_end,
+        "epsilon_decay_episodes": args.epsilon_decay_episodes,
+        "sigma": args.sigma, "episodes": args.episodes,
+        "max_steps": args.max_steps, "seeds": args.seeds,
+        "random_start": args.random_start,
+        "plot": plot_path, "elapsed_sec": round(elapsed, 1),
+    })
+
     tail = max(1, int(0.1 * args.episodes))
     print(f"Elapsed {elapsed:.1f}s")
     print(f"  SARSA  asymptotic return = {s_ret[:, -tail:].mean():+.2f}  "
@@ -357,7 +396,7 @@ def cmd_sweep(args):
             kwargs = dict(alpha=args.alpha, gamma=args.gamma,
                           epsilon=args.epsilon, sigma=args.sigma)
             kwargs[param] = v
-            _, r, _, c = train_sarsa(
+            _, r, _, c = train_agent(
                 grid_path, start,
                 **kwargs, episodes=args.episodes, max_steps=args.max_steps,
                 seed=seed,
@@ -400,6 +439,15 @@ def cmd_sweep(args):
             tail_suc = all_success[v][:, -last_n:].mean()
             w.writerow([v, tail, tail_std, tail_suc])
 
+    write_meta(csv_path, {
+        "cmd": "sweep", "param": param, "values": values,
+        "grid": grid_path, "start_pos": start,
+        "alpha": args.alpha, "gamma": args.gamma, "epsilon": args.epsilon,
+        "sigma": args.sigma, "episodes": args.episodes,
+        "max_steps": args.max_steps, "seeds": args.seeds,
+        "curves_plot": curve_path, "elapsed_sec": round(elapsed, 1),
+    })
+
     print(f"\nElapsed {elapsed:.1f}s")
     print(f"{param:>8} | {'mean ret':>10} | {'std':>7} | {'success':>9}")
     print("-" * 44)
@@ -438,7 +486,7 @@ def cmd_sweep_eps(args):
         ret = np.zeros((args.seeds, args.episodes))
         suc = np.zeros((args.seeds, args.episodes), dtype=int)
         for seed in trange(args.seeds, desc=label):
-            _, r, _, c = train_sarsa(
+            _, r, _, c = train_agent(
                 grid_path, start,
                 alpha=args.alpha, gamma=args.gamma,
                 epsilon=eps0, epsilon_end=eps_end, epsilon_decay_episodes=decay_eps,
@@ -479,6 +527,18 @@ def cmd_sweep_eps(args):
             tail_suc = all_success[label][:, -last_n:].mean()
             w.writerow([label, tail, tail_std, tail_suc])
 
+    write_meta(csv_path, {
+        "cmd": "sweep-eps",
+        "schedules": [{"label": lab, "eps0": e0, "eps_end": ee,
+                       "decay_frac": fr}
+                      for lab, e0, ee, fr in SCHEDULES_DEFAULT],
+        "grid": grid_path, "start_pos": start,
+        "alpha": args.alpha, "gamma": args.gamma, "sigma": args.sigma,
+        "episodes": args.episodes, "max_steps": args.max_steps,
+        "seeds": args.seeds, "curves_plot": curve_path,
+        "elapsed_sec": round(elapsed, 1),
+    })
+
     print(f"\nElapsed {elapsed:.1f}s")
     print(f"{'schedule':<20} | {'mean ret':>10} | {'std':>7} | {'success':>9}")
     print("-" * 56)
@@ -502,7 +562,7 @@ def cmd_transfer(args):
     train_evals, test_evals = [], []
     t0 = time.time()
     for seed in trange(args.seeds, desc="seed"):
-        agent, *_ = train_sarsa(
+        agent, *_ = train_agent(
             args.train_grid, train_start,
             alpha=args.alpha, gamma=args.gamma,
             epsilon=args.epsilon, epsilon_end=args.epsilon_end,
@@ -542,6 +602,16 @@ def cmd_transfer(args):
         f"transfer_{args.train_grid.stem}_to_{args.test_grid.stem}",
         stamp, "csv")
     write_csv(csv_path, list(rows[0].keys()), rows)
+    write_meta(csv_path, {
+        "cmd": "transfer", "train_grid": args.train_grid,
+        "test_grid": args.test_grid, "train_start_pos": train_start,
+        "alpha": args.alpha, "gamma": args.gamma, "epsilon": args.epsilon,
+        "epsilon_end": args.epsilon_end,
+        "epsilon_decay_episodes": args.epsilon_decay_episodes,
+        "sigma": args.sigma, "episodes": args.episodes,
+        "eval_episodes": args.eval_episodes, "max_steps": args.max_steps,
+        "seeds": args.seeds, "elapsed_sec": round(elapsed, 1),
+    })
 
     print(f"\nElapsed {elapsed:.1f}s")
     print(f"{'scenario':<46} | {'return':>10} | {'success':>9} | {'steps':>7}")
@@ -585,7 +655,7 @@ def cmd_eval_configs(args):
             per_det, per_n10 = [], []
             t_start = time.time()
             for seed in seeds:
-                agent, *_ = train_sarsa(
+                agent, *_ = train_agent(
                     grid_path, start,
                     algo=cfg.get("algo", "sarsa"),
                     alpha=cfg["alpha"], gamma=cfg["gamma"],
@@ -625,6 +695,12 @@ def cmd_eval_configs(args):
     elapsed = time.time() - t0
     csv_path = out_path(args.out_dir, f"eval_configs_{args.tag}", stamp, "csv")
     write_csv(csv_path, list(rows[0].keys()), rows)
+    write_meta(csv_path, {
+        "cmd": "eval-configs", "tag": args.tag,
+        "configs_file": args.configs, "configs": configs,
+        "grids": [str(g) for g in grids], "seeds": args.seeds,
+        "elapsed_sec": round(elapsed, 1),
+    })
     print(f"\nElapsed {elapsed:.1f}s\n  -> {csv_path}")
 
 

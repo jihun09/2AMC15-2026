@@ -17,7 +17,8 @@ from agents import BaseAgent
 
 class QLearningAgent(BaseAgent):
     def __init__(self, n_actions=4, alpha=0.1, gamma=0.95, epsilon=0.1,
-                 epsilon_end=None, epsilon_decay_episodes=1, rng_seed=None):
+                 epsilon_end=None, epsilon_decay_episodes=1,
+                 q_init: float | None = None, rng_seed=None):
         super().__init__()
         self.n_actions = n_actions
         self.alpha = alpha
@@ -26,7 +27,10 @@ class QLearningAgent(BaseAgent):
         self.epsilon_end = epsilon_end if epsilon_end is not None else epsilon
         self.epsilon_decay_episodes = max(1, epsilon_decay_episodes)
         self._episode_count = 0
-        self.Q = defaultdict(lambda: np.zeros(self.n_actions))
+        init_val = 0.0 if q_init is None else float(q_init)
+        self.Q = defaultdict(
+            lambda: np.full(self.n_actions, init_val, dtype=float)
+        )
         self._rng = random.Random(rng_seed)
 
     def start_episode(self):
@@ -58,4 +62,4 @@ class QLearningAgent(BaseAgent):
     def update(self, state, reward, action):
         raise RuntimeError(
             "QLearningAgent.update called via the thin BaseAgent interface. "
-            "Use sarsa.py training loop which calls .learn(s, a, r, s', a', done).")
+            "Use sarsa.py's train_agent which calls .learn(s, a, r, s', a', done).")

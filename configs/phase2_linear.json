@@ -1,0 +1,6 @@
+[
+  {"label": "tabular SARSA (baseline)",  "algo": "sarsa",        "alpha": 0.1,  "gamma": 0.99, "epsilon": 0.05,                                              "sigma_train": 0.1, "episodes": 1000},
+  {"label": "linear SARSA, eps=.05",     "algo": "linear-sarsa", "alpha": 0.05, "gamma": 0.99, "epsilon": 0.05,                                              "sigma_train": 0.1, "episodes": 1000},
+  {"label": "linear SARSA, decay .3->.05","algo": "linear-sarsa","alpha": 0.05, "gamma": 0.99, "epsilon": 0.30, "epsilon_end": 0.05, "epsilon_decay_episodes": 700, "sigma_train": 0.1, "episodes": 1000},
+  {"label": "linear SARSA, alpha=.01",   "algo": "linear-sarsa", "alpha": 0.01, "gamma": 0.99, "epsilon": 0.30, "epsilon_end": 0.05, "epsilon_decay_episodes": 700, "sigma_train": 0.1, "episodes": 2000}
+]

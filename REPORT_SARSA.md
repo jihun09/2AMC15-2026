@@ -1,6 +1,6 @@
 # Tabular SARSA — Hyperparameter Study
 
-**TL;DR.** Tabular SARSA with `α = 0.1, γ = 0.99, ε = 0.05` hits the **deterministic optimum on every grid** when given enough episode budget: 4 steps (8×7), 5 (8×8), 28 (15×15 A1), 27 (20×20 large), and 58 (32×22 super_hard) — every seed, every grid. The only knob that mattered for the larger grids was **training episode count** scaling roughly with reachable-state count; on `super_hard` the cliff is between 2000 episodes (80% greedy success) and 5000 (100%, optimal).
+**TL;DR.** Tabular SARSA with `α = 0.1, γ = 0.99, ε = 0.05` hits the **shortest deterministic path on every grid in this codebase** (the 5 supplied `.npy` files) when given enough episode budget: 4 steps (8×7), 5 (8×8), 28 (15×15 A1), 27 (20×20 large), and 58 (32×22 super_hard) — every seed, every grid. The only knob that mattered for the larger grids was **training episode count** scaling roughly with reachable-state count; on `super_hard` the cliff is between 2000 episodes (80% greedy success) and 5000 (100%, optimal). Note: "shortest deterministic path" is the σ=0 optimum, not the σ>0 optimum — see §7 for that distinction.
 
 Single-parameter sweeps (Section 4) are on A1_grid. A focused shootout (Section 7) and cross-grid validation (Section 8) confirm the recommendation generalizes to the smaller and larger normal grids, and characterizes where it breaks. All numbers are mean ± std across 5 seeds.
 
@@ -24,19 +24,23 @@ Q(s, a) ← Q(s, a) + α · [r − Q(s, a)]                       (terminal: boo
 
 Three implementation choices deserve attention:
 
-1. **The update uses `info["actual_action"]`, not the agent's requested action.** Under stochasticity (σ > 0) the environment ignores the requested action with probability σ and substitutes a uniform random one. Updating Q under the requested action would teach the agent the dynamics of an environment that does not exist. See `train_sarsa()` at [sarsa.py:116](sarsa.py#L116).
+1. **The update uses `info["actual_action"]`, not the agent's requested action.** Under stochasticity (σ > 0) the environment ignores the requested action with probability σ and substitutes a uniform random one. Updating Q under the requested action would teach the agent the dynamics of an environment that does not exist. See `train_agent()`'s `agent.learn(...)` call at [sarsa.py:126](sarsa.py#L126).
 
-2. **The start position is locked to the env's first-reset random placement.** Without this, `_initialize_agent_pos` picks a fresh random start every episode, which changes the task per episode and prevents convergence on a single shortest-path policy. See the `lock_start()` helper at [sarsa.py:53](sarsa.py#L53), used at the top of every subcommand.
+2. **The start position is locked to the env's first-reset random placement.** Without this, `_initialize_agent_pos` picks a fresh random start every episode, which changes the task per episode and prevents convergence on a single shortest-path policy. See the `lock_start()` helper at [sarsa.py:61](sarsa.py#L61), used at the top of every subcommand.
 
-3. **The thin `BaseAgent.update(state, reward, action)` is overridden to raise.** That signature is missing `next_state`, `next_action`, and `done` — the three things SARSA actually needs. Routing the agent through `BaseAgent.update` would silently learn wrong updates. Instead it raises loudly so the mistake is caught at the first call. See [sarsa_agent.py:115-126](agents/sarsa_agent.py#L115-L126).
+3. **The thin `BaseAgent.update(state, reward, action)` is overridden to raise.** That signature is missing `next_state`, `next_action`, and `done` — the three things SARSA actually needs. Routing the agent through `BaseAgent.update` would silently learn wrong updates. Instead it raises loudly so the mistake is caught at the first call. See [sarsa_agent.py:122-133](agents/sarsa_agent.py#L122-L133). (As of the latest revision the parent `BaseAgent.update` is also relaxed to a non-abstract no-op so non-learning agents like `RandomAgent`/`NullAgent` don't need to override it; only the TD agents override-to-raise.)
 
-The default hyperparameter constructor signature is `SARSAAgent(n_actions=4, α=0.3, γ=0.95, ε=0.1, ε_end=None, ε_decay_episodes=1)`; linear ε-decay activates only when `ε_end` is set.
+The default hyperparameter constructor signature is `SARSAAgent(n_actions=4, α=0.1, γ=0.95, ε=0.1, ε_end=None, ε_decay_episodes=1, q_init=None)`; linear ε-decay activates only when `ε_end` is set, and `q_init` sets the initial Q-value for every (s, a) — leave as `None` for zero init, or pass a positive float for optimistic init.
 
 ## 2. Methodology
 
 Each experiment trains SARSA from scratch across **5 random seeds (0…4)**, each for the configured episode budget. Per-episode return is logged. Plots show **mean ± 1 std** smoothed by a moving average of `k = episodes // 50`. Console summaries report the mean return over the last 10% of episodes — call this the *asymptotic return* — along with cross-seed std and success rate (fraction of episodes reaching the target before the 500-step truncation).
 
 For final evaluation, the trained agent runs greedily (no ε) on the same grid and we record total steps, failed wall/obstacle moves, and cumulative reward via `env.world_stats`.
+
+**A note on metrics.** The project brief explicitly warns that raw counters like *total steps*, *failed moves*, and *targets reached* are not by themselves good measures of policy quality. Our **primary metric** is therefore the per-episode learning curve (return vs episode, mean ± 1 std across seeds) — this captures both convergence speed *and* asymptotic quality, and is what we use to rank hyperparameters in §4. Greedy-eval step counts (§7–§9) are reported as a *secondary, interpretable* check: once policies have converged, steps under σ=0 quantify how close to the deterministic shortest path each one ended up. We make no claim that minimizing steps is the right objective in general — it happens to correspond to maximizing return under this reward function.
+
+All CSV outputs are accompanied by a sidecar `<basename>.meta.json` capturing the hyperparameters, grid path, seeds, and elapsed time used to produce them, so any result can be reproduced or audited from the file alone.
 
 Default config unless varied:
 | Parameter | Default |
@@ -51,7 +55,7 @@ Default config unless varied:
 
 ## 3. SARSA vs Random baseline
 
-Source: `python sarsa.py compare $GRID/A1_grid.npy ...`. Data shown is from the pre-consolidation run: `results/experiment_sarsa_vs_random_2026-05-12__09-05-37.{csv,png}` (the consolidated `compare` subcommand now writes files prefixed `compare_sarsa_vs_random_*`).
+Source: `python sarsa.py compare $GRID/A1_grid.npy ...`. The current `compare` subcommand writes files prefixed `compare_sarsa_vs_random_*`; the artifacts referenced below (`experiment_sarsa_vs_random_*`) are kept from the pre-consolidation script for traceability and contain identical numbers.
 
 | Agent | Asymptotic return (last 100 eps) | Mean steps | Success rate |
 |-------|----------------------------------|------------|--------------|
@@ -60,9 +64,16 @@ Source: `python sarsa.py compare $GRID/A1_grid.npy ...`. Data shown is from the 
 
 The random agent reaches the target in ~5% of episodes on A1; it doesn't navigate, it stumbles. SARSA, by contrast, is essentially deterministic at convergence: 100% success and a tight cross-seed std (2.5 reward units). The per-episode reward improvement is **+1111**.
 
+![SARSA vs Random — A1_grid](results/experiment_sarsa_vs_random_2026-05-12__09-05-37.png)
+
+*Two-panel learning curve from `compare` subcommand. **Left**: per-episode return (mean ± 1 std over 5 seeds, smoothed k=20). SARSA starts around −600 in the first episodes — the agent is exploring randomly, ε=0.1, hitting walls, never reaching the goal — and climbs to its asymptote near −35 by episode ~400. The Random baseline is a flat orange band at −1150, with the wide shaded region showing that even Random's variance (~±150 reward units across episodes) doesn't approach SARSA's converged region. **Right**: episode length. SARSA's path drops from ~400 steps (mostly hitting the max_steps=500 cap) down to ~35 steps as it learns the route. Random sits at the 500-step cap permanently because it almost never finds the target.*
+*The cleanest visual evidence that SARSA is doing real learning rather than getting lucky: the std band on the right panel collapses to nearly a single line by episode 500 — every seed converges to essentially the same path length.*
+
 ## 4. Per-parameter analysis
 
 Each subsection asks one question, tests it with a sweep, and reports the multi-seed answer. The plots referenced are in `results/` with the matching timestamp.
+
+> ⚠️ **Single-grid caveat.** All sweeps in §4 are on `A1_grid` (15×15, optimal path ≈ 28 steps). Single-grid sweeps can mislead: any verdict on γ, α, or ε is implicitly about *this* horizon and reward density. §8 re-runs the winning configs across five grids of different sizes and explicitly overturns two §4 findings (γ=0.95 ≈ γ=0.99, and "fixed ε beats decay") at larger horizon. Treat §4's recommendations as provisional until §8.
 
 ### 4.1 Learning rate α — "How fast should SARSA bootstrap?"
 
@@ -76,7 +87,15 @@ Setup: γ = 0.95, σ = 0.1, ε = 0.1, 1000 episodes, 5 seeds. Sweep α ∈ {0.01
 | 0.30 | −37.58 | 1.42 | 100% |
 | 0.50 | −44.17 | 2.35 | 100% |
 
-The curve is U-shaped with a minimum at α=0.1. α=0.01 is the only configuration that meaningfully under-fits within 1000 episodes — the agent does reach the target in every late-stage episode (100% success) but it crawls there, taking a long, wandering path because the value gradient between path cells has barely formed. At α ≥ 0.3 the updates start to oscillate around the optimum, producing slightly noisier long-run behavior. **α = 0.1 sits at the trough.** Importantly, the cross-seed std stays small (≤ 2.5) across the entire sweep, so this is a real ordering, not seed noise.
+The shape is essentially **a cliff followed by a plateau**, not the smooth inverted-U you'd expect from a textbook learning-rate sweep. α=0.01 is in a different regime entirely — −146.81 return, ~112 reward units worse than any other value. The remaining four (α ∈ {0.05, 0.1, 0.3, 0.5}) all converge to returns between −34.70 and −44.17, with α=0.1 marginally best. Given cross-seed std of 1.4–2.5 across those four, **α=0.05, 0.1, and 0.3 are statistically indistinguishable at n=5** — only α=0.5 is meaningfully worse than the peak (~9.5 reward units, ~4× the noise floor). So the honest claim is: avoid α ≤ 0.01 (under-fits) and avoid α ≥ 0.5 (mild oscillation premium); anywhere in [0.05, 0.3] is fine, with α=0.1 a defensible center of that plateau. The cross-seed std stays small across the entire sweep, so the *ordering* among the top four is real, just small in magnitude.
+
+![Learning curves vs α — A1_grid](results/sweep_alpha_curves_2026-05-12__09-05-31.png)
+
+*Learning curves for each α value (mean ± 1 std over 5 seeds, smoothed). The α=0.01 curve (deep purple) is the dramatic outlier: it climbs out of the −600 floor more slowly than every other setting and is still at −150 by episode 1000 — visibly below the other four curves, which all bunch together near −35. The shaded std bands tell a complementary story: α=0.01's band is wide (different seeds end up at very different returns), while α=0.05 → α=0.3 bands are tight and almost overlapping. α=0.5 (yellow) climbs fastest in the first ~50 episodes but plateaus a hair higher than α=0.1 — visible as the small yellow-vs-pink gap in the asymptote. That gap is the oscillation premium you pay at high α.*
+
+![Asymptotic return vs α — A1_grid](results/sweep_alpha_bars_2026-05-12__09-05-31.png)
+
+*Bar chart from the pre-consolidation script (kept for visual reference; current `sweep` no longer produces it). Left panel: asymptotic return is a one-bar story — α=0.01 is the bar that goes off the bottom of the chart at −147; the other four cluster tightly between −34.7 and −44.2, with α=0.1 the highest bar (best return). Note the y-axis is **return**, so visually the four right bars form an inverted-U (∩) peak around α=0.1 — not a U with a "minimum", which would only be the right framing if the axis were regret/loss. The right "convergence speed" panel in the original artifact is empty — under our noisy training (σ=0.1, ε=0.1) the asymptotic floor sits around −35 so the original "episodes-to-return ≥ 0" threshold never fires for any α. A useful negative-data result: "time to positive return" is the wrong convergence metric for this setting. The proper metric is **episodes-to-within-X%-of-asymptote** (e.g. 90%); not implemented here, left as a known gap.*
 
 ### 4.2 Discount factor γ — "How far ahead must the agent look?"
 
@@ -94,6 +113,11 @@ This is the **sharpest cliff in the entire study**. γ ≤ 0.8 leaves SARSA fund
 
 The 0.99 column is interesting — it's a hair better in return and a tighter std than 0.95, but the difference (≈1.2 reward units) is well inside the per-seed noise floor. For a grid this size, γ = 0.95 is the practical sweet spot.
 
+![Learning curves vs γ — A1_grid](results/sweep_gamma_curves_2026-05-12__09-05-33.png)
+
+*The cleanest "this is a cliff, not a gradient" figure in the whole report. γ=0.5 (purple) and γ=0.8 (lighter purple) are stuck near −500 to −600 for the entire run — they never learn anything. γ=0.9 (teal) is the borderline case made visible: it climbs out of the floor sometime around episode 100, but then **oscillates wildly between −100 and −500** for the rest of training. Some seeds find a working policy, others lose it again, and the wide teal std band (±200 wide) is the cross-seed disagreement showing up as instability. γ=0.95 (green) and γ=0.99 (yellow) overlap almost perfectly and rise smoothly to the asymptote at ~−35.*
+*Note the **caveat this figure hides**: at multi-grid scale (Section 8), γ=0.95's tight green band turns into a 189-step std on `large_grid` — γ=0.95 looks robust here because A1's optimal path is just barely short enough for it to work.*
+
 ### 4.3 Stochasticity σ — "How does SARSA cope with a noisy actuator?"
 
 Setup: α = 0.1, γ = 0.95, ε = 0.1, 1000 episodes, 5 seeds. Sweep σ ∈ {0.0, 0.1, 0.3, 0.5}.
@@ -108,6 +132,14 @@ Setup: α = 0.1, γ = 0.95, ε = 0.1, 1000 episodes, 5 seeds. Sweep σ ∈ {0.0,
 SARSA degrades **monotonically and predictably** with noise, but never breaks: success rate is 100% at every σ tested. The return loss between σ=0.0 and σ=0.5 (≈80 reward units) is consistent with a doubling of effective episode length under heavy actuator noise — the agent is being randomly redirected on half its steps, so even an optimal policy spends more wall-clock steps reaching the target.
 
 This is the **on-policy** signature: SARSA learns Q-values *of the noisy behavior policy*, so it inflates Q for paths near walls (the random action might pin the agent there) and the resulting greedy policy is conservative. The 5-seed std stays under 3 across the entire sweep, so the conservatism is reliable, not lucky.
+
+![Learning curves vs σ — A1_grid](results/sweep_sigma_curves_2026-05-12__09-05-35.png)
+
+*Each σ produces a curve at a different asymptote, but with the same shape — all four converge inside the first ~300 episodes. From top (best) to bottom: σ=0.0 (purple, −27), σ=0.1 (blue, −35), σ=0.3 (green, −60), σ=0.5 (yellow, −110). The vertical spacing between curves is roughly consistent with the cost of extra detour steps under noise. **The std bands are nearly invisible after episode 300**: SARSA's degradation under noise is highly reproducible across seeds, not a coin flip. That's exactly what you want from an on-policy method — it knows the world is noisy, so it learns a policy that's robust to that noise.*
+
+![Asymptotic return + success vs σ — A1_grid](results/sweep_sigma_bars_2026-05-12__09-05-35.png)
+
+*Two complementary bars. Left: asymptotic return drops monotonically (−27, −35, −60, −107). Right: **success rate is 100% at every σ** — SARSA always reaches the target, it just takes more steps when the actuator is noisy. This is the practical point for a delivery-robot deployment: SARSA degrades gracefully and predictably. No surprise failures under noise, only longer paths.*
 
 ### 4.4 Exploration ε — "Should we decay it?"
 
@@ -128,6 +160,10 @@ Two findings:
 
 Decay is essentially a free safety net: if the task were larger (more exploration needed early), decay gives you that exploration; if the task is small (like A1), decay converges to the same place as fixed-low-ε.
 
+![Learning curves vs ε schedule — A1_grid](results/sweep_epsilon_curves_2026-05-12__09-06-37.png)
+
+*Two-panel figure. **Left**: learning curves for the four schedules. Three of them — `fixed_0.05` (purple), `fixed_0.10` (blue), and `decay_0.30→0.05` (yellow) — bunch together at the −30 asymptote, with tight std bands. The outlier is `fixed_0.30` (green), which converges to about −80 with a noticeably wider std band — the agent is being yanked off the optimal path by random exploration 30% of every training episode forever, so the policy never fully settles. **Right**: the actual ε schedule applied during training. Three horizontal lines for the fixed schedules (0.05, 0.10, 0.30) and a linear ramp for the decay schedule that hits ε=0.05 at episode 700 then stays flat. The decay curve (yellow) starting from 0.30 spends most of its early training at high ε — visible in the left panel as the yellow curve being slightly worse than fixed_0.05 for the first ~300 episodes — but ends up matching fixed_0.05 once it's decayed in. The decay schedule is the "free safety net" version: it explores early when it might still need to find the goal, but settles low enough to converge cleanly.*
+
 ### 4.5 Cross-grid transfer (negative result)
 
 Source: `python sarsa.py transfer --train_grid $GRID/A1_grid.npy --test_grid $GRID/super_hard.npy ...`, output `results/transfer_A1_grid_to_super_hard_2026-05-12__09-06-38.csv`. Train on A1 (2000 eps, ε-decay 0.3→0.05), then freeze Q and evaluate greedily on `super_hard.npy`.
@@ -145,7 +181,7 @@ Combining the four single-parameter sweeps:
 
 | Parameter | Provisional pick | Reasoning |
 | --------- | ---------------- | --------- |
-| α | **0.1** | Trough of the U; lower under-fits, higher oscillates |
+| α | **0.1** | Centre of the [0.05, 0.3] plateau where α is effectively indistinguishable; α=0.01 under-fits, α≥0.5 mildly oscillates |
 | γ | **0.95** (but 0.99 also good) | First γ where every seed converges with tight std |
 | σ | (environmental) | Not a tuning knob, but performance is monotone and bounded |
 | ε | **0.05 fixed**, or 0.3 → 0.05 decay if exploration needed | Lower fixed ε reduces mean return and tightens cross-seed std |
@@ -187,9 +223,11 @@ For each candidate I train SARSA from scratch for `episodes` episodes (under σ=
 
 Three observations:
 
-**1. The deterministic optimum is 28 steps / 0 failures / reward −17.** That's the theoretical shortest path on A1 from start (1, 12) to the target — every empty step costs −1, the goal pays +10, so a 28-step path nets −17. The provisional recommendation (γ=0.95, ε=0.05, 1000 eps) gets there on 4 of 5 seeds; the fifth seed lands on a 30-step alternative path. **The published recommendation was 0.5 reward units short of optimal.**
+**1. The σ=0 shortest path is 28 steps / 0 failures / reward −17.** That's the deterministic-actuator shortest path on A1 from start (1, 12) to the target — every empty step costs −1, the goal pays +10, so a 28-step path nets −17. The provisional recommendation (γ=0.95, ε=0.05, 1000 eps) gets there on 4 of 5 seeds; the fifth seed lands on a 30-step alternative path. **The published recommendation was 0.5 reward units short of the deterministic shortest path.**
 
-**2. Four configurations tie at the exact optimum** (28.0 ± 0.0, every seed): γ=0.99, α=0.2, optimistic-init + decay, and just training the provisional config for 2000 episodes. The first three each address the same failure mode — that one stubborn seed — through different mechanisms:
+*Important caveat on "optimum".* Throughout §7–§8 we report "optimum" to mean *the σ=0 shortest path under this reward function*. This is **not** the same as the optimal policy of the σ>0 MDP. With σ=0.1 the true MDP-optimal policy would trade a few extra deterministic steps for paths that hug walls less (because a slipped action into a wall costs −5 vs −1 for a normal step). The σ=0 shortest path is well-defined, easy to verify by hand, and what the agent converges to under our training regime — but readers should not over-interpret "28.0 ± 0.0" as a claim that the policy is *Bellman-optimal* for the noisy environment. §4.3 already hinted at this: SARSA's σ-degradation curve shows the agent learns increasingly conservative policies as σ rises.
+
+**2. Four configurations are indistinguishable at n=5** (28.0 ± 0.0 every seed): γ=0.99, α=0.2, optimistic-init + decay, and just training the provisional config for 2000 episodes. With 5 seeds and zero variance we cannot rule out hit-rates of e.g. 0.97 vs 0.99 between configs — n=5 is enough to distinguish 4/5 from 5/5 but not 100% from 99%. The takeaway is that *all four mechanisms repeatedly hit the shortest path on the seeds we tested*, not that they are mathematically equivalent. The four address the same failure mode (one stubborn seed on the provisional config) through different mechanisms:
 
 - **γ=0.99** sharpens the Q-value gradient between adjacent path cells, so subtle preference differences survive ε-noise.
 - **α=0.2** lets each transition pull harder on Q, so the rare exploration that *does* find the optimum gets locked in faster.
@@ -198,7 +236,7 @@ Three observations:
 
 **3. Optimistic init *without* decay is actively worse** — 80% success, std of 189 steps. Two seeds got trapped revisiting overestimated Q-values and never recovered. Optimism without enough exploration is a foot-gun: lesson is that optimism needs ε-decay (or aggressive exploration) to converge — fixed low ε can't grind down inflated Q's fast enough.
 
-Under σ=0.1 (more realistic) all converged configs become indistinguishable: ~33 steps, reward ≈ −27, std ≈ 3 — environmental noise dominates the policy difference.
+Under σ=0.1 (more realistic) all converged configs become indistinguishable at the n=5 noise floor: ~33 steps, reward ≈ −27, std ≈ 3 — environmental noise dominates whatever policy difference may exist.
 
 ### Updated recommendation
 
@@ -206,7 +244,7 @@ Under σ=0.1 (more realistic) all converged configs become indistinguishable: ~3
 α = 0.1, γ = 0.99, ε = 0.05 (fixed), 1000 episodes, max 500 steps/episode
 ```
 
-**5-seed greedy eval at σ=0:** 28.0 ± 0.0 steps, 0 failed moves, reward −17.0 ± 0.0, 100% success — the **theoretical optimum**, every seed.
+**5-seed greedy eval at σ=0:** 28.0 ± 0.0 steps, 0 failed moves, reward −17.0 ± 0.0, 100% success — the **σ=0 shortest path**, every seed.
 **5-seed greedy eval at σ=0.1:** 33.2 ± 2.8 steps, reward −27.0 ± 6.8 — matched only by environmental noise.
 **Training time:** ≈ 2 seconds end-to-end.
 
@@ -275,7 +313,7 @@ A rough rule of thumb: the required episode budget scales roughly linearly with 
 - The Section 4.5 transfer experiment (A1 → super_hard, 0% success) was attributed entirely to the state representation. Refining: the state-representation argument still holds (`(row, col)` doesn't generalize), but the original report also implied super_hard was *fundamentally* harder than A1. It isn't — it's just *bigger*. Given proportional budget, tabular SARSA solves it cleanly.
 - **What I tried that didn't help on super_hard**: γ=0.999, optimistic Q₀=10, ε=0.7 wide-decay, kitchen-sink (everything dialed up to 10k episodes). All converged to the exact same 58-step path as plain 5000 episodes. Hyperparameter tuning above the convergence threshold is a wash.
 
-### 8.5 When tabular SARSA would actually break
+### 8.5 When tabular SARSA would actually break — and what Phase 2 needs
 
 What I *didn't* test, and would expect to genuinely break tabular SARSA with position-only state:
 
@@ -284,6 +322,8 @@ What I *didn't* test, and would expect to genuinely break tabular SARSA with pos
 - **Random target positions.** Same as the first — state needs target info.
 
 For the fixed-grid, fixed-target task this codebase ships with, tabular SARSA is sufficient as long as you give it the budget the grid demands.
+
+**Sketch of what Phase 2 will need.** The course brief stages the project from this discrete environment toward "a more realistic problem with continuous state space" using Deep RL. Concretely the gap is two-fold: (i) **state representation** — replace `(row, col)` with a feature vector that generalizes across positions and across grids: at minimum a local k×k obstacle patch around the agent plus (Δrow, Δcol) to the nearest target; in continuous form, robot pose plus distance/heading to target plus a short LIDAR-like obstacle scan. (ii) **function approximator** — replace the `defaultdict` Q-table with a parameterized Q(s, a; θ) or π(a|s; θ). A natural first step is linear function approximation over the feature vector above (this keeps SARSA's on-policy guarantees and is one MLP-layer away from DQN). The next step is a small neural network with experience replay and a target network — the same `train_agent` skeleton applies, only the agent's `learn(...)` changes from a tabular TD update to a minibatch gradient step. Section 4.5's transfer failure (0% on `super_hard` with a Q-table from A1) is the load-bearing motivation for this transition.
 
 ## 9. Algorithm comparison — can we converge faster than plain SARSA?
 
@@ -383,3 +423,69 @@ If wall-clock training time matters more than environment-interaction count, pla
 
 - **Section 4's "more episodes is the only knob for super_hard" claim is incomplete.** Eligibility traces are a second knob, and a more powerful one — they shift the convergence threshold from 5000 to 1000 episodes on super_hard.
 - **Section 8.4's claim that hyperparameter tuning above the convergence threshold is a wash** holds *only* for plain SARSA. With the algorithm itself as a knob, sample efficiency can be cut 2–5×.
+
+## 10. Phase 2 scaffold — linear function approximation
+
+§4.5 showed that tabular SARSA's 0% cross-grid transfer is a state-representation problem: the Q-table is keyed on `(row, col)` pairs that don't generalize. Phase 2 of this project requires moving toward a continuous state space and Deep RL; this section builds the first stepping-stone — a **linear function approximator** over hand-crafted features — and reports what it does and doesn't fix.
+
+Implementation in [agents/linear_sarsa_agent.py](agents/linear_sarsa_agent.py). The agent uses the same `select_action` / `learn` / `start_episode` interface as the tabular agents and plugs into `train_agent` through `AGENT_CLASSES["linear-sarsa"]`. The only new training-loop dependency is `agent.set_context(env.grid)` called once per episode after `env.reset()` — the function-approximation agents need to know the target position and obstacle layout to build features, and this is duck-typed so tabular agents are unaffected.
+
+### 10.1 Representation
+
+The state is the agent position `(r, c)`. The feature vector `φ(s)` is 10-dimensional:
+
+| Index | Feature | Description |
+| ----: | ------- | ----------- |
+| 0 | `dx_norm` | `(target_row − r) / grid_h` — signed vertical Δ to target, normalized |
+| 1 | `dy_norm` | `(target_col − c) / grid_w` — signed horizontal Δ, normalized |
+| 2 | `\|dx_norm\|` | unsigned vertical Δ |
+| 3 | `\|dy_norm\|` | unsigned horizontal Δ |
+| 4 | `mdist_norm` | `(\|dx\| + \|dy\|) / (grid_h + grid_w)` — Manhattan distance |
+| 5–8 | `wall_{N,S,E,W}` | 1 if the adjacent cell is wall/obstacle/off-grid, else 0 |
+| 9 | `bias` | constant 1.0 |
+
+Q is parameterized as `Q(s, a) = W[a] · φ(s)`, with `W ∈ ℝ^{4×10}` initialized to zero. The SARSA update becomes `W[a] += α · δ · φ(s)` where `δ = r + γ · Q(s', a') − Q(s, a)` is the TD error. Normalizing the position features by grid dimensions keeps feature magnitudes in the same range across grids of different sizes — without this, the same `W` would behave very differently on an 8×8 vs a 32×22 grid.
+
+### 10.2 Results — does it learn?
+
+5 seeds, 3000 episodes each, α=0.02, γ=0.99, ε-decay 0.30→0.05 over the first 2100 episodes, σ=0.1 training, greedy σ=0 evaluation. The lower α (vs the tabular 0.1) reflects that linear TD methods are more sensitive to step size — high α with large feature magnitudes diverges. Reproduce with `python phase2_linear_eval.py` ([phase2_linear_eval.py](phase2_linear_eval.py)); raw rows in [results/phase2_linear_smoke_2026-05-12__13-46-19.csv](results/phase2_linear_smoke_2026-05-12__13-46-19.csv).
+
+| Grid (train = eval) | Shape | Optimal (tabular) | Linear SARSA — mean steps | Cross-seed std | Success |
+| ------------------ | ----- | ----------------: | -----------------------: | -------------: | ------: |
+| `example_grid` | 8×7 | 4 | **63.4** | 118.3 | **80%** |
+| `small_grid` | 8×8 | 5 | **122.0** | 145.3 | **60%** |
+| `A1_grid` | 15×15 | 28 | 300 (cap) | 0.0 | **0%** |
+| `large_grid` | 20×20 | 27 | 240.6 | 118.8 | 20% |
+
+Two patterns are visible. **(a) Linear SARSA can solve the obstacle-sparse grids most of the time** — 80% on `example_grid`, 60% on `small_grid`. The huge step-count std (~120) means "some seeds find a short path, others time out" rather than "every seed wobbles around the optimum"; this is consistent with the linear policy getting stuck in cul-de-sacs depending on which exploration path the seed happened to find. **(b) On the wall-rich grids — A1 (15×15) and large_grid (20×20) — the linear approximator fails outright** (0% and 20%). The agent walks straight toward the target, bumps into a wall, gets a −5 penalty, and the 4 wall features aren't enough to teach it to *route around* obstacles.
+
+### 10.3 Results — does it transfer?
+
+This is the experiment that motivated linear FA in the first place. We train on one grid and evaluate greedily on *different* grids — the test tabular SARSA failed in §4.5 at 0%.
+
+| Train → Eval | Linear SARSA success | Tabular SARSA (§4.5 analogue) |
+| ------------ | -------------------: | ----------------------------: |
+| `example_grid` → `example_grid` (sanity) | 80% | 100% |
+| `example_grid` → `small_grid` | **0%** | 0% |
+| `example_grid` → `A1_grid` | **0%** | 0% |
+
+**Transfer remains at 0%** even with feature-based generalization. The diagnosis is straightforward: the trained weights encode "from a state with these wall/distance features, prefer this action" — but the *combinations of features* that appear on `small_grid` and `A1_grid` are not the same combinations the agent saw on `example_grid`. With only four binary wall features, the agent can distinguish a few dozen "what's around me" patterns at best; once obstacle layouts change, the policy is operating off-distribution.
+
+### 10.4 What this tells us
+
+Three takeaways:
+
+1. **The Phase 2 plumbing works end-to-end.** `set_context`, the feature extractor, the per-action linear Q, and the SARSA update all train without numerical issues, and the agent does learn on open grids. The same `train_agent` skeleton drove all four algorithms in this report (tabular SARSA, Q-learning, SARSA(λ), linear SARSA); the only thing that changed is the agent's internal representation. This is the right shape for plugging in DQN next.
+
+2. **The features are the bottleneck, not the algorithm.** Linear SARSA on `A1_grid` fails not because TD-with-function-approximation is broken — it learns just fine on `example_grid` — but because four binary wall-direction features can't represent the routing decisions that A1's corridors and dead-ends require. The fix is more expressive features (next paragraph), not a different RL update.
+
+3. **Transfer requires features that don't bake in grid-specific patterns.** The current `dx_norm` / `dy_norm` features encode *direction to target*, which is genuinely grid-agnostic. But everything else (wall_N/S/E/W) is too local to teach navigation around extended obstacles, and the policy learned on `example_grid`'s specific obstacle layout doesn't apply to `small_grid`'s different layout. Cross-grid generalization needs features that capture *local geometry beyond the immediate cell* — at minimum a k×k obstacle patch, ideally something like a short-range LIDAR-style scan.
+
+### 10.5 Next steps
+
+Two parallel tracks:
+
+- **Richer hand-crafted features (cheap):** add a `k×k` obstacle patch (k=3 → 8 extra binary features) and a per-cardinal "free-corridor length" (how many empty cells before the first wall in each direction). These are still linear-friendly and would let the agent distinguish "wall directly N + open corridor E" from "walls all around". Expected to fix `A1_grid` for moderate-complexity layouts.
+- **Function approximator with learnable features (Phase 2 proper):** replace the linear `W ∈ ℝ^{4×10}` with a small MLP (one hidden layer of 32 units is plenty for these grids), train with experience replay and a target network — i.e., **DQN**. The same `train_agent` loop applies; only the agent's `learn(...)` changes from a per-step weight update to a minibatch SGD step. This is the canonical bridge from tabular TD to Deep RL and is the natural next milestone for this codebase.
+
+If both work, the comparison will be informative: linear-with-better-features tests *how much representation is enough*, and DQN tests *whether learning the features end-to-end pays off*. For the project's stated goal of a "more realistic problem with continuous state space," the DQN track is the load-bearing one — the linear scaffold is a sanity check that everything below the function approximator (training loop, env interface, evaluation) is solid before adding gradient-based learning into the mix.

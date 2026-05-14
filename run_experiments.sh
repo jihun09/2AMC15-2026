@@ -64,6 +64,9 @@ echo "==> Section 9.3: algorithm comparison on super_hard"
 $PY sarsa.py eval-configs $GRID/super_hard.npy \
     --configs configs/algo_super_hard.json --seeds 5 --tag algo_super_hard
 
+echo "==> Section 10: Phase 2 scaffold — linear function approximation"
+$PY phase2_linear_eval.py --seeds 5 --episodes 3000
+
 echo
 echo "Done. See REPORT_SARSA.md sections for analysis."
 echo "Outputs in $RESULTS/"

@@ -21,10 +21,17 @@ class BaseAgent(ABC):
             state: The updated position of the agent.
         """
         raise NotImplementedError
-    
-    @abstractmethod
+
     def update(self, state: tuple[int, int], reward: float, action: int):
-        """Any code that processes a reward given the state and updates the agent.
+        """Process a transition. Default is a no-op so non-learning agents
+        (e.g. Random, Null) don't need to override it.
+
+        Note: this signature is intentionally narrow (it lacks `next_state`,
+        `next_action`, and `done`). TD-style learners (SARSA, Q-learning,
+        SARSA(lambda)) need that extra information and therefore expose a
+        richer `learn(...)` method called directly by their training loop;
+        they override this method to raise so that accidental routing
+        through the thin BaseAgent interface fails loudly.
 
         Args:
             state: The updated position of the agent.
@@ -32,4 +39,4 @@ class BaseAgent(ABC):
                 reward.
             action: The action which was taken by the agent.
         """
-        raise NotImplementedError
+        return None
