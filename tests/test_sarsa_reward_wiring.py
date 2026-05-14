@@ -1,6 +1,5 @@
 """Smoke tests for sarsa.py's reward wiring."""
 import numpy as np
-from pathlib import Path
 
 from sarsa import make_env
 
