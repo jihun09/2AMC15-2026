@@ -31,6 +31,7 @@ import numpy as np
 from tqdm import trange
 
 from world import Environment
+from utils import reward_fn, compute_bfs_distances, shaped_reward
 from agents.sarsa_agent import SARSAAgent
 from agents.qlearning_agent import QLearningAgent
 from agents.sarsa_lambda_agent import SARSALambdaAgent
@@ -71,6 +72,7 @@ def make_env(grid_path, sigma, seed, start_pos):
     return Environment(
         grid_fp=grid_path, no_gui=True, sigma=sigma, target_fps=-1,
         agent_start_pos=start_pos, random_seed=seed,
+        reward_fn=reward_fn,
     )
 
 
