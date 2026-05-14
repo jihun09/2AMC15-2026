@@ -1,0 +1,11 @@
+{
+  "alpha": [0.05, 0.1, 0.3],
+  "gamma": [0.95, 0.99],
+  "epsilon_schedule": [
+    {"label": "fixed_0.10", "epsilon": 0.1, "epsilon_end": null, "epsilon_decay_episodes": 1},
+    {"label": "fixed_0.30", "epsilon": 0.3, "epsilon_end": null, "epsilon_decay_episodes": 1},
+    {"label": "decay_0.30_to_0.05", "epsilon": 0.3, "epsilon_end": 0.05, "epsilon_decay_episodes": 700}
+  ],
+  "shaping_weight": [0.0, 3.0],
+  "q_init": [0.0, 1.0]
+}

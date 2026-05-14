@@ -773,6 +773,94 @@ def cmd_eval_configs(args):
 
 
 # ====================================================================
+# Subcommand: grid-sweep (cross-product sweep over the candidate pool)
+# ====================================================================
+
+def cmd_grid_sweep(args):
+    """Cross-product sweep over (alpha, gamma, eps_schedule, shaping, q_init).
+
+    Trains each config across `seeds` seeds on a single grid, runs greedy
+    eval at sigma=0 to get a POR proxy, and writes one CSV row per config.
+    """
+    import itertools
+    from eval_helpers import policy_optimality_ratio
+
+    stamp = time.strftime("%Y-%m-%d__%H-%M-%S")
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+    axes = json.loads(args.axes_file.read_text())
+    grid_path = args.GRID
+    start = parse_start_pos(args.start_pos) or lock_start(grid_path, 0)
+
+    combos = list(itertools.product(
+        axes["alpha"], axes["gamma"], axes["epsilon_schedule"],
+        axes["shaping_weight"], axes["q_init"],
+    ))
+    print(f"Sweeping {len(combos)} configs x {args.seeds} seeds on "
+          f"{grid_path.name} (start={start})")
+
+    rows = []
+    t0 = time.time()
+    for idx, (alpha, gamma, eps_sched, sw, qi) in enumerate(combos):
+        cfg_label = (f"a={alpha}_g={gamma}_eps={eps_sched['label']}"
+                     f"_sw={sw}_qi={qi}")
+        conv_eps, pors, returns_last10 = [], [], []
+        for seed in range(args.seeds):
+            agent, _r, _s, _c, conv = train_agent(
+                grid_path, start,
+                algo="sarsa",
+                alpha=alpha, gamma=gamma,
+                epsilon=eps_sched["epsilon"],
+                epsilon_end=eps_sched["epsilon_end"],
+                epsilon_decay_episodes=eps_sched["epsilon_decay_episodes"],
+                sigma=args.sigma,
+                episodes=args.episodes,
+                max_steps=args.max_steps,
+                q_init=qi,
+                seed=seed,
+                track_per_episode=True,
+                shaping_weight=sw,
+                patience=args.patience,
+            )
+            conv_eps.append(conv if conv is not None else args.episodes)
+            por, _ = policy_optimality_ratio(
+                grid_path, start, agent,
+                sigma_eval=0.0, n_eval_episodes=args.eval_episodes,
+                max_steps=args.max_steps, seed=seed,
+            )
+            pors.append(por)
+            returns_last10.append(float(_r[-max(1, int(0.1 * len(_r))):].mean()))
+        rows.append({
+            "config_label": cfg_label,
+            "alpha": alpha, "gamma": gamma,
+            "epsilon_label": eps_sched["label"],
+            "shaping_weight": sw, "q_init": qi,
+            "conv_ep_mean": float(np.mean(conv_eps)),
+            "conv_ep_std": float(np.std(conv_eps)),
+            "POR_mean": float(np.mean(pors)),
+            "POR_std": float(np.std(pors)),
+            "return_last10pct_mean": float(np.mean(returns_last10)),
+        })
+        if (idx + 1) % 10 == 0:
+            print(f"  [{idx + 1}/{len(combos)}]")
+    elapsed = time.time() - t0
+
+    csv_path = out_path(args.out_dir, "sarsa_sweep", stamp, "csv")
+    write_csv(csv_path, list(rows[0].keys()), rows)
+    write_meta(csv_path, {
+        "cmd": "grid-sweep", "axes_file": str(args.axes_file),
+        "grid": grid_path, "start_pos": start,
+        "sigma": args.sigma, "episodes": args.episodes,
+        "max_steps": args.max_steps, "seeds": args.seeds,
+        "eval_episodes": args.eval_episodes,
+        "patience": args.patience,
+        "n_configs": len(combos),
+        "elapsed_sec": round(elapsed, 1),
+    })
+    print(f"\nElapsed {elapsed:.1f}s")
+    print(f"  -> {csv_path}")
+
+
+# ====================================================================
 # Entry point
 # ====================================================================
 
@@ -879,6 +967,20 @@ def main():
                      help="Tag for output filename: eval_configs_<tag>_<stamp>.csv")
     pec.add_argument("--out_dir", type=Path, default=Path("results"))
     pec.set_defaults(func=cmd_eval_configs)
+
+    # grid-sweep
+    pg = sub.add_parser("grid-sweep", help="Cross-product hyperparameter sweep.")
+    pg.add_argument("GRID", type=Path)
+    pg.add_argument("--axes_file", type=Path, required=True)
+    pg.add_argument("--episodes", type=int, default=1000)
+    pg.add_argument("--max_steps", type=int, default=500)
+    pg.add_argument("--sigma", type=float, default=0.1)
+    pg.add_argument("--seeds", type=int, default=3)
+    pg.add_argument("--eval_episodes", type=int, default=10)
+    pg.add_argument("--patience", type=int, default=100)
+    pg.add_argument("--start_pos", type=str, default=None)
+    pg.add_argument("--out_dir", type=Path, default=Path("results"))
+    pg.set_defaults(func=cmd_grid_sweep)
 
     args = p.parse_args()
     args.func(args)
