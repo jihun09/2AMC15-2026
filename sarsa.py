@@ -101,9 +101,7 @@ def train_agent(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
     env_start = None if random_start else start
     env = make_env(grid_path, sigma, seed, env_start)
     env.reset()
-    # Pre-compute BFS distances for potential-based reward shaping.
-    # When shaping_weight == 0, shaped_reward() is a no-op except for the
-    # finite-distance check, but we still gate it to avoid the array build.
+    # Skip the O(grid) BFS build when shaping is disabled.
     bfs_dist = compute_bfs_distances(env.grid) if shaping_weight else None
     if not random_start:
         env.agent_start_pos = start
