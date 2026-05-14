@@ -92,7 +92,7 @@ def train_agent(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
                 epsilon_end=None, epsilon_decay_episodes=1, lambda_=None,
                 sigma, episodes, max_steps, q_init=None,
                 random_start=False, seed=0, track_per_episode=True,
-                desc=None):
+                desc=None, shaping_weight=0.0):
     """Train one of {sarsa, qlearning, sarsa-lambda}. Returns
     (agent, returns, steps, successes) arrays of length `episodes` when
     track_per_episode=True, otherwise (agent, None, None, None).
@@ -101,6 +101,10 @@ def train_agent(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
     env_start = None if random_start else start
     env = make_env(grid_path, sigma, seed, env_start)
     env.reset()
+    # Pre-compute BFS distances for potential-based reward shaping.
+    # When shaping_weight == 0, shaped_reward() is a no-op except for the
+    # finite-distance check, but we still gate it to avoid the array build.
+    bfs_dist = compute_bfs_distances(env.grid) if shaping_weight else None
     if not random_start:
         env.agent_start_pos = start
 
@@ -131,6 +135,8 @@ def train_agent(grid_path, start, *, algo="sarsa", alpha, gamma, epsilon,
         success = False
         for _ in range(max_steps):
             ns, r, term, info = env.step(action)
+            if shaping_weight:
+                r = shaped_reward(r, state, ns, term, bfs_dist, shaping_weight)
             na = agent.select_action(ns, training=True)
             agent.learn(state=state, action=info["actual_action"], reward=r,
                         next_state=ns, next_action=na, done=term)
@@ -251,6 +257,7 @@ def cmd_train(args):
             sigma=args.sigma, episodes=args.episodes, max_steps=args.max_steps,
             q_init=args.q_init, seed=args.seed,
             desc=f"train {grid_path.stem}",
+            shaping_weight=args.shaping_weight,
         )
         elapsed = time.time() - t0
         rows = [{"episode": i, "return": float(returns[i]),
@@ -266,6 +273,7 @@ def cmd_train(args):
             "sigma": args.sigma, "episodes": args.episodes,
             "max_steps": args.max_steps, "q_init": args.q_init,
             "seed": args.seed, "elapsed_sec": round(elapsed, 1),
+            "shaping_weight": args.shaping_weight,
         })
         tail = max(1, int(0.1 * args.episodes))
         print(f"[{grid_path.stem}] {elapsed:.1f}s  "
@@ -297,7 +305,8 @@ def cmd_compare(args):
                     grid_path, start, alpha=args.alpha, gamma=args.gamma,
                     epsilon=args.epsilon, epsilon_end=args.epsilon_end,
                     epsilon_decay_episodes=args.epsilon_decay_episodes,
-                    random_start=args.random_start, **kw)
+                    random_start=args.random_start,
+                    shaping_weight=args.shaping_weight, **kw)
             else:
                 _, r, s, c = run_random(grid_path, start, **kw)
             ret[seed], stp[seed], suc[seed] = r, s, c
@@ -363,6 +372,7 @@ def cmd_compare(args):
         "max_steps": args.max_steps, "seeds": args.seeds,
         "random_start": args.random_start,
         "plot": plot_path, "elapsed_sec": round(elapsed, 1),
+        "shaping_weight": args.shaping_weight,
     })
 
     tail = max(1, int(0.1 * args.episodes))
@@ -734,6 +744,7 @@ def main():
     pt.add_argument("--seed", type=int, default=0)
     pt.add_argument("--start_pos", type=str, default=None)
     pt.add_argument("--out_dir", type=Path, default=Path("results"))
+    pt.add_argument("--shaping_weight", type=float, default=0.0)
     pt.set_defaults(func=cmd_train)
 
     # compare
@@ -751,6 +762,7 @@ def main():
     pc.add_argument("--random_start", action="store_true")
     pc.add_argument("--start_pos", type=str, default=None)
     pc.add_argument("--out_dir", type=Path, default=Path("results"))
+    pc.add_argument("--shaping_weight", type=float, default=0.0)
     pc.set_defaults(func=cmd_compare)
 
     # sweep
