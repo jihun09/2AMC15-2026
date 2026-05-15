@@ -7,7 +7,8 @@ from pathlib import Path
 from tqdm import trange
 
 from world import Environment
-from agents.random_agent import RandomAgent
+from world.grid import Grid
+from agents.value_iteration_agent import ValueIterationAgent
 
 def parse_args():
     p = ArgumentParser(description="DIC Reinforcement Learning Trainer.")
@@ -43,8 +44,9 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
                           agent_start_pos=start_pos,
                           random_seed=random_seed)
         
-        # Initialize agent
-        agent = RandomAgent()
+        # Initialize agent — VI plans offline from the grid before any interaction
+        grid_array = Grid.load_grid(grid).cells
+        agent = ValueIterationAgent(grid_array, sigma=sigma)
         
         # Always reset the environment to initial state
         initial_pos = env.reset()
