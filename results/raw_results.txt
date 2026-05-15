@@ -1,0 +1,143 @@
+================================================================
+SARSA — 6 Experimental Setups — Wed May 13 18:57:35 +06 2026
+Grid: grid_configs/A1_grid.npy | Start: 1,12
+Tuned: α=0.1, ε=0.05 (fixed)
+================================================================
+
+=== EXP1: sigma=0.02 (baseline) ===
+python train_sarsa.py grid_configs/A1_grid.npy --start_pos 1,12 --no_gui --alpha 0.1 --gamma 0.95 --epsilon 0.05 --sigma 0.02 --epsilon_decay_mode fixed --no_shaping --episodes 1000 --max_steps 1000 --eval_steps 500 --eval_episodes 20 --random_seed 0 --name exp1_sigma0.02
+---
+usage: train_sarsa.py [-h] [--no_gui] [--sigma SIGMA]
+                      [--shaping_weight SHAPING_WEIGHT] [--episodes EPISODES]
+                      [--max_steps MAX_STEPS] [--random_seed RANDOM_SEED]
+                      [--start_pos START_POS] [--alpha ALPHA] [--gamma GAMMA]
+                      [--epsilon EPSILON] [--epsilon_decay EPSILON_DECAY]
+                      [--epsilon_min EPSILON_MIN]
+                      [--epsilon_decay_mode {multiplicative,linear,fixed}]
+                      [--epsilon_decay_episodes EPSILON_DECAY_EPISODES]
+                      [--eval_steps EVAL_STEPS]
+                      [--eval_episodes EVAL_EPISODES]
+                      [--convergence_window CONVERGENCE_WINDOW]
+                      [--convergence_threshold CONVERGENCE_THRESHOLD]
+                      [--name NAME]
+                      GRID [GRID ...]
+train_sarsa.py: error: unrecognized arguments: --no_shaping
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.11)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+
+=== EXP2: sigma=0.5 (high noise) ===
+python train_sarsa.py grid_configs/A1_grid.npy --start_pos 1,12 --no_gui --alpha 0.1 --gamma 0.95 --epsilon 0.05 --sigma 0.5 --epsilon_decay_mode fixed --no_shaping --episodes 1000 --max_steps 1000 --eval_steps 500 --eval_episodes 20 --random_seed 0 --name exp2_sigma0.5
+---
+usage: train_sarsa.py [-h] [--no_gui] [--sigma SIGMA]
+                      [--shaping_weight SHAPING_WEIGHT] [--episodes EPISODES]
+                      [--max_steps MAX_STEPS] [--random_seed RANDOM_SEED]
+                      [--start_pos START_POS] [--alpha ALPHA] [--gamma GAMMA]
+                      [--epsilon EPSILON] [--epsilon_decay EPSILON_DECAY]
+                      [--epsilon_min EPSILON_MIN]
+                      [--epsilon_decay_mode {multiplicative,linear,fixed}]
+                      [--epsilon_decay_episodes EPSILON_DECAY_EPISODES]
+                      [--eval_steps EVAL_STEPS]
+                      [--eval_episodes EVAL_EPISODES]
+                      [--convergence_window CONVERGENCE_WINDOW]
+                      [--convergence_threshold CONVERGENCE_THRESHOLD]
+                      [--name NAME]
+                      GRID [GRID ...]
+train_sarsa.py: error: unrecognized arguments: --no_shaping
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.11)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+
+=== EXP3: gamma=0.95 (high discount) ===
+python train_sarsa.py grid_configs/A1_grid.npy --start_pos 1,12 --no_gui --alpha 0.1 --gamma 0.95 --epsilon 0.05 --sigma 0.02 --epsilon_decay_mode fixed --no_shaping --episodes 1000 --max_steps 1000 --eval_steps 500 --eval_episodes 20 --random_seed 0 --name exp3_gamma0.95
+---
+usage: train_sarsa.py [-h] [--no_gui] [--sigma SIGMA]
+                      [--shaping_weight SHAPING_WEIGHT] [--episodes EPISODES]
+                      [--max_steps MAX_STEPS] [--random_seed RANDOM_SEED]
+                      [--start_pos START_POS] [--alpha ALPHA] [--gamma GAMMA]
+                      [--epsilon EPSILON] [--epsilon_decay EPSILON_DECAY]
+                      [--epsilon_min EPSILON_MIN]
+                      [--epsilon_decay_mode {multiplicative,linear,fixed}]
+                      [--epsilon_decay_episodes EPSILON_DECAY_EPISODES]
+                      [--eval_steps EVAL_STEPS]
+                      [--eval_episodes EVAL_EPISODES]
+                      [--convergence_window CONVERGENCE_WINDOW]
+                      [--convergence_threshold CONVERGENCE_THRESHOLD]
+                      [--name NAME]
+                      GRID [GRID ...]
+train_sarsa.py: error: unrecognized arguments: --no_shaping
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.11)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+
+=== EXP4: gamma=0.6 (low discount) ===
+python train_sarsa.py grid_configs/A1_grid.npy --start_pos 1,12 --no_gui --alpha 0.1 --gamma 0.6 --epsilon 0.05 --sigma 0.02 --epsilon_decay_mode fixed --no_shaping --episodes 1000 --max_steps 1000 --eval_steps 500 --eval_episodes 20 --random_seed 0 --name exp4_gamma0.6
+---
+usage: train_sarsa.py [-h] [--no_gui] [--sigma SIGMA]
+                      [--shaping_weight SHAPING_WEIGHT] [--episodes EPISODES]
+                      [--max_steps MAX_STEPS] [--random_seed RANDOM_SEED]
+                      [--start_pos START_POS] [--alpha ALPHA] [--gamma GAMMA]
+                      [--epsilon EPSILON] [--epsilon_decay EPSILON_DECAY]
+                      [--epsilon_min EPSILON_MIN]
+                      [--epsilon_decay_mode {multiplicative,linear,fixed}]
+                      [--epsilon_decay_episodes EPSILON_DECAY_EPISODES]
+                      [--eval_steps EVAL_STEPS]
+                      [--eval_episodes EVAL_EPISODES]
+                      [--convergence_window CONVERGENCE_WINDOW]
+                      [--convergence_threshold CONVERGENCE_THRESHOLD]
+                      [--name NAME]
+                      GRID [GRID ...]
+train_sarsa.py: error: unrecognized arguments: --no_shaping
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.11)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+
+=== EXP5: BFS shaping OFF (baseline) ===
+python train_sarsa.py grid_configs/A1_grid.npy --start_pos 1,12 --no_gui --alpha 0.1 --gamma 0.95 --epsilon 0.05 --sigma 0.02 --epsilon_decay_mode fixed --no_shaping --episodes 1000 --max_steps 1000 --eval_steps 500 --eval_episodes 20 --random_seed 0 --name exp5_unshaped
+---
+usage: train_sarsa.py [-h] [--no_gui] [--sigma SIGMA]
+                      [--shaping_weight SHAPING_WEIGHT] [--episodes EPISODES]
+                      [--max_steps MAX_STEPS] [--random_seed RANDOM_SEED]
+                      [--start_pos START_POS] [--alpha ALPHA] [--gamma GAMMA]
+                      [--epsilon EPSILON] [--epsilon_decay EPSILON_DECAY]
+                      [--epsilon_min EPSILON_MIN]
+                      [--epsilon_decay_mode {multiplicative,linear,fixed}]
+                      [--epsilon_decay_episodes EPSILON_DECAY_EPISODES]
+                      [--eval_steps EVAL_STEPS]
+                      [--eval_episodes EVAL_EPISODES]
+                      [--convergence_window CONVERGENCE_WINDOW]
+                      [--convergence_threshold CONVERGENCE_THRESHOLD]
+                      [--name NAME]
+                      GRID [GRID ...]
+train_sarsa.py: error: unrecognized arguments: --no_shaping
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.11)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+
+=== EXP6: BFS shaping ON ===
+python train_sarsa.py grid_configs/A1_grid.npy --start_pos 1,12 --no_gui --alpha 0.1 --gamma 0.95 --epsilon 0.05 --sigma 0.02 --epsilon_decay_mode fixed --episodes 1000 --max_steps 1000 --eval_steps 500 --eval_episodes 20 --random_seed 0 --name exp6_shaped
+---
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.11)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+============================================================
+Grid: grid_configs/A1_grid.npy | Start: (1, 12)
+α=0.1, γ=0.95, ε=0.05 (fixed), σ=0.02
+============================================================
+BFS optimal path from (1, 12): 28 steps
+Training SARSA:   0%|          | 0/1000 [00:00<?, ?it/s]Training SARSA:  60%|█████▉    | 596/1000 [00:00<00:00, 5951.78it/s]Training SARSA: 100%|██████████| 1000/1000 [00:00<00:00, 6004.27it/s]
+
+────────────────────────────────────────
+RESULTS: A1_grid
+────────────────────────────────────────
+  Convergence speed:      episode 50 (converged)
+  BFS optimal path:       28 steps
+  Avg eval steps:         28.9
+  Eval success rate:      100.00%
+  Policy optimality ratio: 0.9672
+  Q-table size:           360 entries
+  Final epsilon:          0.0500
+────────────────────────────────────────
+
+Plot saved: results/exp6_shaped_A1_grid_learning_curve.png
+

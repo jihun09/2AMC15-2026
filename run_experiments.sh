@@ -1,153 +1,137 @@
 #!/bin/bash
 # =============================================================================
-# SARSA Experiment Runner
+# SARSA: 6 Experimental Setups (for cross-algorithm comparison)
 # =============================================================================
-# Runs all required experiment combinations:
-#   - 2 grids: A1_grid, example_grid
-#   - 2 discount factors (gamma): 0.6, 0.9
-#   - 2 stochasticity values (sigma): 0.02, 0.5
-#   - 2 learning rates (alpha): 0.01, 0.1
-#   - 2 epsilon values: 0.1, 0.3
+# These match configs/experiments.json — same setups will be run for VI and MC
+# by teammates. Results go to results/raw_results.txt
 #
-# Fixed: start_pos=1,12 on A1_grid (as required by assignment)
-#        start_pos=1,1 on example_grid (pick a valid empty cell)
+# Factors tested:
+#   - Stochasticity: σ=0.02 vs σ=0.5
+#   - Discount factor: γ=0.95 vs γ=0.6
+#   - Reward shaping: BFS shaped vs unshaped
 #
-# Each experiment produces:
-#   - results/<name>_learning_curve.png  (training progress)
-#   - results/<timestamp>.png            (path visualization)
-#   - results/<timestamp>.txt            (evaluation stats)
+# Tuned SARSA hyperparameters (from configs/sarsa_best.json):
+#   α=0.1, ε=0.05 (fixed), episodes=1000, max_steps=1000
 # =============================================================================
 
-# --- BASELINE: Random agent on both grids (for comparison) ---
+set -e
 
-echo "========== BASELINE: Random agent =========="
-python train_sarsa.py grid_configs/A1_grid.npy \
-    --start_pos 1,12 --no_gui --episodes 1 --max_steps 1000 \
-    --eval_steps 1000 --eval_random \
-    --name baseline_random_A1grid
+GRID="grid_configs/A1_grid.npy"
+START_POS="1,12"
+ALPHA=0.1
+EPSILON=0.05
+EPISODES=1000
+MAX_STEPS=1000
+EVAL_STEPS=500
+EVAL_EPISODES=20
+SEED=0
 
-python train_sarsa.py grid_configs/example_grid.npy \
-    --start_pos 1,1 --no_gui --episodes 1 --max_steps 1000 \
-    --eval_steps 1000 --eval_random \
-    --name baseline_random_example
+RESULTS_FILE="results/raw_results.txt"
+mkdir -p results
 
-# =============================================================================
-# EXPERIMENT SET 1: Varying learning rate (alpha)
-# Fixed: gamma=0.9, epsilon=0.1, sigma=0.02
-# =============================================================================
+echo "================================================================" > "$RESULTS_FILE"
+echo "SARSA — 6 Experimental Setups — $(date)" >> "$RESULTS_FILE"
+echo "Grid: $GRID | Start: $START_POS" >> "$RESULTS_FILE"
+echo "Tuned: α=$ALPHA, ε=$EPSILON (fixed)" >> "$RESULTS_FILE"
+echo "================================================================" >> "$RESULTS_FILE"
 
-echo "========== EXP 1: Varying alpha =========="
-
-# alpha=0.1
-python train_sarsa.py grid_configs/A1_grid.npy \
-    --start_pos 1,12 --no_gui \
-    --alpha 0.1 --gamma 0.9 --epsilon 0.1 --sigma 0.02 \
-    --episodes 500 --max_steps 1000 --eval_steps 500 \
-    --name exp_A1_alpha0.1_gamma0.9_eps0.1_sigma0.02
-
-python train_sarsa.py grid_configs/example_grid.npy \
-    --start_pos 1,1 --no_gui \
-    --alpha 0.1 --gamma 0.9 --epsilon 0.1 --sigma 0.02 \
-    --episodes 500 --max_steps 1000 --eval_steps 500 \
-    --name exp_example_alpha0.1_gamma0.9_eps0.1_sigma0.02
-
-# alpha=0.01
-python train_sarsa.py grid_configs/A1_grid.npy \
-    --start_pos 1,12 --no_gui \
-    --alpha 0.01 --gamma 0.9 --epsilon 0.1 --sigma 0.02 \
-    --episodes 500 --max_steps 1000 --eval_steps 500 \
-    --name exp_A1_alpha0.01_gamma0.9_eps0.1_sigma0.02
-
-python train_sarsa.py grid_configs/example_grid.npy \
-    --start_pos 1,1 --no_gui \
-    --alpha 0.01 --gamma 0.9 --epsilon 0.1 --sigma 0.02 \
-    --episodes 500 --max_steps 1000 --eval_steps 500 \
-    --name exp_example_alpha0.01_gamma0.9_eps0.1_sigma0.02
+run_exp() {
+    local label="$1"
+    shift
+    echo "" >> "$RESULTS_FILE"
+    echo "=== $label ===" >> "$RESULTS_FILE"
+    echo "python train_sarsa.py $*" >> "$RESULTS_FILE"
+    echo "---" >> "$RESULTS_FILE"
+    python train_sarsa.py "$@" 2>&1 | tee -a "$RESULTS_FILE"
+    echo "" >> "$RESULTS_FILE"
+}
 
 # =============================================================================
-# EXPERIMENT SET 2: Varying discount factor (gamma)
-# Fixed: alpha=0.1, epsilon=0.1, sigma=0.02
+# EXP 1: Stochasticity — low noise (σ=0.02)
 # =============================================================================
+echo ">>> Experiment 1: σ=0.02 (baseline)"
 
-echo "========== EXP 2: Varying gamma =========="
-
-# gamma=0.9 (already done above in exp set 1)
-
-# gamma=0.6
-python train_sarsa.py grid_configs/A1_grid.npy \
-    --start_pos 1,12 --no_gui \
-    --alpha 0.1 --gamma 0.6 --epsilon 0.1 --sigma 0.02 \
-    --episodes 500 --max_steps 1000 --eval_steps 500 \
-    --name exp_A1_alpha0.1_gamma0.6_eps0.1_sigma0.02
-
-python train_sarsa.py grid_configs/example_grid.npy \
-    --start_pos 1,1 --no_gui \
-    --alpha 0.1 --gamma 0.6 --epsilon 0.1 --sigma 0.02 \
-    --episodes 500 --max_steps 1000 --eval_steps 500 \
-    --name exp_example_alpha0.1_gamma0.6_eps0.1_sigma0.02
+run_exp "EXP1: sigma=0.02 (baseline)" "$GRID" \
+    --start_pos "$START_POS" --no_gui \
+    --alpha $ALPHA --gamma 0.95 --epsilon $EPSILON --sigma 0.02 \
+    --epsilon_decay_mode fixed --no_shaping \
+    --episodes $EPISODES --max_steps $MAX_STEPS \
+    --eval_steps $EVAL_STEPS --eval_episodes $EVAL_EPISODES \
+    --random_seed $SEED \
+    --name "exp1_sigma0.02"
 
 # =============================================================================
-# EXPERIMENT SET 3: Varying stochasticity (sigma)
-# Fixed: alpha=0.1, gamma=0.9, epsilon=0.1
+# EXP 2: Stochasticity — high noise (σ=0.5)
 # =============================================================================
+echo ">>> Experiment 2: σ=0.5"
 
-echo "========== EXP 3: Varying sigma =========="
-
-# sigma=0.02 (already done above in exp set 1)
-
-# sigma=0.5
-python train_sarsa.py grid_configs/A1_grid.npy \
-    --start_pos 1,12 --no_gui \
-    --alpha 0.1 --gamma 0.9 --epsilon 0.1 --sigma 0.5 \
-    --episodes 500 --max_steps 1000 --eval_steps 500 \
-    --name exp_A1_alpha0.1_gamma0.9_eps0.1_sigma0.5
-
-python train_sarsa.py grid_configs/example_grid.npy \
-    --start_pos 1,1 --no_gui \
-    --alpha 0.1 --gamma 0.9 --epsilon 0.1 --sigma 0.5 \
-    --episodes 500 --max_steps 1000 --eval_steps 500 \
-    --name exp_example_alpha0.1_gamma0.9_eps0.1_sigma0.5
+run_exp "EXP2: sigma=0.5 (high noise)" "$GRID" \
+    --start_pos "$START_POS" --no_gui \
+    --alpha $ALPHA --gamma 0.95 --epsilon $EPSILON --sigma 0.5 \
+    --epsilon_decay_mode fixed --no_shaping \
+    --episodes $EPISODES --max_steps $MAX_STEPS \
+    --eval_steps $EVAL_STEPS --eval_episodes $EVAL_EPISODES \
+    --random_seed $SEED \
+    --name "exp2_sigma0.5"
 
 # =============================================================================
-# EXPERIMENT SET 4: Varying epsilon
-# Fixed: alpha=0.1, gamma=0.9, sigma=0.02
+# EXP 3: Discount factor — high (γ=0.95)
 # =============================================================================
+echo ">>> Experiment 3: γ=0.95"
 
-echo "========== EXP 4: Varying epsilon =========="
-
-# epsilon=0.1 (already done above in exp set 1)
-
-# epsilon=0.3
-python train_sarsa.py grid_configs/A1_grid.npy \
-    --start_pos 1,12 --no_gui \
-    --alpha 0.1 --gamma 0.9 --epsilon 0.3 --sigma 0.02 \
-    --episodes 500 --max_steps 1000 --eval_steps 500 \
-    --name exp_A1_alpha0.1_gamma0.9_eps0.3_sigma0.02
-
-python train_sarsa.py grid_configs/example_grid.npy \
-    --start_pos 1,1 --no_gui \
-    --alpha 0.1 --gamma 0.9 --epsilon 0.3 --sigma 0.02 \
-    --episodes 500 --max_steps 1000 --eval_steps 500 \
-    --name exp_example_alpha0.1_gamma0.9_eps0.3_sigma0.02
+run_exp "EXP3: gamma=0.95 (high discount)" "$GRID" \
+    --start_pos "$START_POS" --no_gui \
+    --alpha $ALPHA --gamma 0.95 --epsilon $EPSILON --sigma 0.02 \
+    --epsilon_decay_mode fixed --no_shaping \
+    --episodes $EPISODES --max_steps $MAX_STEPS \
+    --eval_steps $EVAL_STEPS --eval_episodes $EVAL_EPISODES \
+    --random_seed $SEED \
+    --name "exp3_gamma0.95"
 
 # =============================================================================
-# EXPERIMENT SET 5: High stochasticity + high gamma (stress test)
-# Shows SARSA's conservative behavior under uncertainty
+# EXP 4: Discount factor — low (γ=0.6)
 # =============================================================================
+echo ">>> Experiment 4: γ=0.6"
 
-echo "========== EXP 5: Stress test (high sigma + high gamma) =========="
+run_exp "EXP4: gamma=0.6 (low discount)" "$GRID" \
+    --start_pos "$START_POS" --no_gui \
+    --alpha $ALPHA --gamma 0.6 --epsilon $EPSILON --sigma 0.02 \
+    --epsilon_decay_mode fixed --no_shaping \
+    --episodes $EPISODES --max_steps $MAX_STEPS \
+    --eval_steps $EVAL_STEPS --eval_episodes $EVAL_EPISODES \
+    --random_seed $SEED \
+    --name "exp4_gamma0.6"
 
-python train_sarsa.py grid_configs/A1_grid.npy \
-    --start_pos 1,12 --no_gui \
-    --alpha 0.1 --gamma 0.9 --epsilon 0.1 --sigma 0.5 \
-    --episodes 1000 --max_steps 2000 --eval_steps 500 \
-    --name exp_A1_stress_sigma0.5_episodes1000
+# =============================================================================
+# EXP 5: Reward — without BFS shaping (baseline)
+# =============================================================================
+echo ">>> Experiment 5: BFS shaping OFF (baseline)"
 
-python train_sarsa.py grid_configs/example_grid.npy \
-    --start_pos 1,1 --no_gui \
-    --alpha 0.1 --gamma 0.9 --epsilon 0.1 --sigma 0.5 \
-    --episodes 1000 --max_steps 2000 --eval_steps 500 \
-    --name exp_example_stress_sigma0.5_episodes1000
+run_exp "EXP5: BFS shaping OFF (baseline)" "$GRID" \
+    --start_pos "$START_POS" --no_gui \
+    --alpha $ALPHA --gamma 0.95 --epsilon $EPSILON --sigma 0.02 \
+    --epsilon_decay_mode fixed --no_shaping \
+    --episodes $EPISODES --max_steps $MAX_STEPS \
+    --eval_steps $EVAL_STEPS --eval_episodes $EVAL_EPISODES \
+    --random_seed $SEED \
+    --name "exp5_unshaped"
 
-echo "========== ALL EXPERIMENTS COMPLETE =========="
-echo "Results saved in results/ directory"
+# =============================================================================
+# EXP 6: Reward — with BFS shaping
+# =============================================================================
+echo ">>> Experiment 6: BFS shaping ON"
+
+run_exp "EXP6: BFS shaping ON" "$GRID" \
+    --start_pos "$START_POS" --no_gui \
+    --alpha $ALPHA --gamma 0.95 --epsilon $EPSILON --sigma 0.02 \
+    --epsilon_decay_mode fixed \
+    --episodes $EPISODES --max_steps $MAX_STEPS \
+    --eval_steps $EVAL_STEPS --eval_episodes $EVAL_EPISODES \
+    --random_seed $SEED \
+    --name "exp6_shaped"
+
+# =============================================================================
+echo ""
+echo "========== ALL 6 EXPERIMENTS COMPLETE =========="
+echo "Results: $RESULTS_FILE"
+echo "Plots:   results/exp*_learning_curve.png"

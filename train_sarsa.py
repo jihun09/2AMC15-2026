@@ -2,19 +2,13 @@
 SARSA Training Script.
 
 Trains a SARSA agent across multiple episodes and evaluates it.
-Supports experimenting with different hyperparameters and grids.
+Reports two key metrics:
+  1. Policy optimality ratio: BFS_shortest_path / actual_steps (0-1, 1=optimal)
+  2. Convergence speed: episode at which stopping criterion triggers
 
 Usage examples:
-    # Basic training on A1_grid with defaults
-    python train_sarsa.py grid_configs/A1_grid.npy --start_pos 1,12 --no_gui
-
-    # Experiment with different hyperparameters
-    python train_sarsa.py grid_configs/A1_grid.npy --start_pos 1,12 --no_gui \
-        --alpha 0.1 --gamma 0.9 --epsilon 0.1 --sigma 0.02 --episodes 500
-
-    # Compare two grids
-    python train_sarsa.py grid_configs/A1_grid.npy grid_configs/example_grid.npy \
-        --start_pos 1,12 --no_gui --episodes 1000
+    python train_sarsa.py grid_configs/A1_grid.npy --no_gui
+    python train_sarsa.py grid_configs/A1_grid.npy grid_configs/large_grid.npy --no_gui --episodes 1000
 """
 
 from argparse import ArgumentParser
@@ -24,9 +18,103 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from world import Environment
+from world.grid import Grid
 from agents.sarsa_agent import SarsaAgent
 from agents.random_agent import RandomAgent
+from utils import reward_fn, compute_bfs_distances, shaped_reward
 
+
+# =============================================================================
+# Convergence detection
+# =============================================================================
+
+def detect_convergence(episode_successes: list[int], window: int = 50,
+                       threshold: float = 0.95) -> int:
+    """Detect the episode at which the agent has converged.
+
+    Convergence is defined as the first episode where the rolling success
+    rate (over `window` episodes) reaches `threshold`.
+
+    Returns:
+        Episode number (0-indexed) at which convergence is reached,
+        or -1 if never reached.
+    """
+    if len(episode_successes) < window:
+        return -1
+    success_arr = np.array(episode_successes, dtype=float)
+    rolling = np.convolve(success_arr, np.ones(window) / window, mode='valid')
+    above = np.where(rolling >= threshold)[0]
+    if len(above) > 0:
+        return int(above[0]) + window  # episode at which window ends
+    return -1
+
+
+# =============================================================================
+# Greedy evaluation for policy optimality ratio
+# =============================================================================
+
+def evaluate_greedy(env: Environment, agent: SarsaAgent, start_pos: tuple[int, int],
+                    bfs_dist: np.ndarray, max_steps: int = 500,
+                    n_eval_episodes: int = 10) -> dict:
+    """Evaluate the trained agent greedily and compute policy optimality ratio.
+
+    Args:
+        env: Environment instance.
+        agent: Trained SARSA agent.
+        start_pos: Starting position.
+        bfs_dist: BFS distance array.
+        max_steps: Max steps per evaluation episode.
+        n_eval_episodes: Number of evaluation episodes to average over.
+
+    Returns:
+        Dict with evaluation metrics.
+    """
+    optimal_steps = int(bfs_dist[start_pos])
+    actual_steps_list = []
+    successes = 0
+
+    for _ in range(n_eval_episodes):
+        state = env.reset(agent_start_pos=start_pos)
+        steps = 0
+        for _ in range(max_steps):
+            action = agent.select_action(state, training=False)
+            state, _, terminated, _ = env.step(action)
+            steps += 1
+            if terminated:
+                successes += 1
+                break
+        actual_steps_list.append(steps)
+
+    avg_steps = np.mean(actual_steps_list)
+    success_rate = successes / n_eval_episodes
+
+    # Policy optimality ratio: optimal / actual (capped at 1.0)
+    # Only meaningful when agent reaches the goal
+    if success_rate > 0:
+        # Average only over successful episodes
+        successful_steps = [s for s, succ in
+                           zip(actual_steps_list,
+                               [1 if s < max_steps else 0 for s in actual_steps_list])
+                           if succ]
+        if successful_steps:
+            avg_successful_steps = np.mean(successful_steps)
+            optimality_ratio = min(1.0, optimal_steps / avg_successful_steps)
+        else:
+            optimality_ratio = 0.0
+    else:
+        optimality_ratio = 0.0
+
+    return {
+        "optimal_steps": optimal_steps,
+        "avg_eval_steps": avg_steps,
+        "success_rate": success_rate,
+        "optimality_ratio": optimality_ratio,
+    }
+
+
+# =============================================================================
+# Training
+# =============================================================================
 
 def parse_args():
     p = ArgumentParser(description="SARSA Agent Trainer and Evaluator.")
@@ -36,16 +124,16 @@ def parse_args():
                    help="Disables rendering to train faster.")
     p.add_argument("--sigma", type=float, default=0.02,
                    help="Stochasticity of the environment (default: 0.02).")
-    p.add_argument("--fps", type=int, default=30,
-                   help="Frames per second for GUI rendering.")
-    p.add_argument("--episodes", type=int, default=500,
-                   help="Number of training episodes (default: 500).")
+    p.add_argument("--shaping_weight", type=float, default=3.0,
+                   help="BFS reward shaping weight (default: 3.0).")
+    p.add_argument("--episodes", type=int, default=1000,
+                   help="Number of training episodes (default: 1000).")
     p.add_argument("--max_steps", type=int, default=1000,
                    help="Max steps per episode (default: 1000).")
     p.add_argument("--random_seed", type=int, default=0,
                    help="Random seed for the environment.")
-    p.add_argument("--start_pos", type=str, default=None,
-                   help="Agent start position as row,col (e.g. 1,12).")
+    p.add_argument("--start_pos", type=str, default="1,1",
+                   help="Agent start position as row,col (default: 1,1).")
 
     # SARSA hyperparameters
     p.add_argument("--alpha", type=float, default=0.1,
@@ -55,125 +143,145 @@ def parse_args():
     p.add_argument("--epsilon", type=float, default=0.1,
                    help="Exploration rate for ε-greedy (default: 0.1).")
     p.add_argument("--epsilon_decay", type=float, default=0.995,
-                   help="Epsilon decay per episode (default: 0.995).")
+                   help="Multiplicative epsilon decay per episode (default: 0.995).")
     p.add_argument("--epsilon_min", type=float, default=0.01,
-                   help="Minimum epsilon value (default: 0.01).")
+                   help="Minimum/final epsilon value (default: 0.01).")
+    p.add_argument("--epsilon_decay_mode", type=str, default="fixed",
+                   choices=["multiplicative", "linear", "fixed"],
+                   help="Epsilon decay strategy (default: fixed).")
+    p.add_argument("--epsilon_decay_episodes", type=int, default=None,
+                   help="Episodes over which linear decay happens "
+                        "(default: same as --episodes).")
 
     # Evaluation
-    p.add_argument("--eval_steps", type=int, default=200,
-                   help="Max steps during evaluation (default: 200).")
-    p.add_argument("--eval_random", action="store_true",
-                   help="Also evaluate a random agent for comparison.")
+    p.add_argument("--eval_steps", type=int, default=500,
+                   help="Max steps during greedy evaluation (default: 500).")
+    p.add_argument("--eval_episodes", type=int, default=10,
+                   help="Number of greedy evaluation episodes (default: 10).")
+    p.add_argument("--convergence_window", type=int, default=50,
+                   help="Window size for convergence detection (default: 50).")
+    p.add_argument("--convergence_threshold", type=float, default=0.95,
+                   help="Success rate threshold for convergence (default: 0.95).")
     p.add_argument("--name", type=str, default=None,
-                   help="Experiment name for output files. If not set, "
-                        "auto-generates from hyperparameters.")
+                   help="Experiment name for output files.")
     return p.parse_args()
 
 
 def train_sarsa(env: Environment, agent: SarsaAgent, episodes: int,
-                max_steps: int, start_pos: tuple[int, int] | None) -> list[float]:
+                max_steps: int, start_pos: tuple[int, int] | None,
+                bfs_dist: np.ndarray | None = None,
+                shaping_weight: float = 3.0) -> tuple:
     """Train the SARSA agent over multiple episodes.
 
-    Args:
-        env: The environment to train in.
-        agent: The SARSA agent.
-        episodes: Number of episodes to train.
-        max_steps: Maximum steps per episode.
-        start_pos: Fixed starting position (for fair comparison).
-
     Returns:
-        List of cumulative rewards per episode (for plotting learning curves).
+        Tuple of (episode_rewards, episode_steps, episode_successes).
     """
     episode_rewards = []
     episode_steps = []
+    episode_successes = []
 
     for ep in trange(episodes, desc="Training SARSA"):
-        # Reset environment and agent episode state
         state = env.reset(agent_start_pos=start_pos) if start_pos else env.reset()
         agent.reset_episode()
 
-        # Choose first action
-        action = agent.take_action(state)
+        action = agent.select_action(state, training=True)
 
         cumulative_reward = 0.0
         steps = 0
+        success = False
 
         for step in range(max_steps):
-            # Take action in environment
             next_state, reward, terminated, info = env.step(action)
             actual_action = info["actual_action"]
 
-            # Choose next action from next_state (SARSA is on-policy)
-            next_action = agent.take_action(next_state)
+            # Apply BFS reward shaping
+            if bfs_dist is not None:
+                reward = shaped_reward(reward, state, next_state,
+                                       terminated, bfs_dist, shaping_weight)
 
-            # SARSA update: Q(s,a) += alpha * [r + gamma*Q(s',a') - Q(s,a)]
-            current_q = agent.q_table[(state, actual_action)]
-            next_q = agent.q_table[(next_state, next_action)]
-            td_target = reward + agent.gamma * next_q
-            td_error = td_target - current_q
-            agent.q_table[(state, actual_action)] = current_q + agent.alpha * td_error
+            next_action = agent.select_action(next_state, training=True)
+
+            agent.learn(state=state,
+                        action=actual_action,
+                        reward=reward,
+                        next_state=next_state,
+                        next_action=next_action,
+                        done=terminated)
 
             cumulative_reward += reward
             steps += 1
-
-            # Move to next state and action
             state = next_state
             action = next_action
 
             if terminated:
+                success = True
                 break
 
-        # Decay exploration rate after each episode
         agent.decay_epsilon()
         episode_rewards.append(cumulative_reward)
         episode_steps.append(steps)
+        episode_successes.append(int(success))
 
-    return episode_rewards, episode_steps
+    return episode_rewards, episode_steps, episode_successes
 
 
-def plot_learning_curve(episode_rewards: list[float], episode_steps: list[float],
-                        title: str, save_path: Path):
-    """Plot and save the learning curve.
-
-    Args:
-        episode_rewards: Cumulative reward per episode.
-        episode_steps: Steps taken per episode.
-        title: Plot title.
-        save_path: Where to save the figure.
-    """
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
-
-    # Reward curve
-    ax1.plot(episode_rewards, alpha=0.3, color='blue', label='Per episode')
-    # Smoothed (rolling average)
+def plot_learning_curve(episode_rewards, episode_steps, episode_successes,
+                        convergence_ep, title, save_path):
+    """Plot learning curve with convergence marker."""
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 10))
     window = min(50, len(episode_rewards) // 5) if len(episode_rewards) > 10 else 1
+
+    # Reward
+    ax1.plot(episode_rewards, alpha=0.3, color='blue', label='Per episode')
     if window > 1:
         smoothed = np.convolve(episode_rewards, np.ones(window)/window, mode='valid')
         ax1.plot(range(window-1, len(episode_rewards)), smoothed,
-                 color='red', linewidth=2, label=f'Rolling avg (window={window})')
+                 color='red', linewidth=2, label=f'Rolling avg (w={window})')
+    if convergence_ep > 0:
+        ax1.axvline(convergence_ep, color='green', linestyle='--',
+                    label=f'Converged @ ep {convergence_ep}')
     ax1.set_xlabel('Episode')
     ax1.set_ylabel('Cumulative Reward')
-    ax1.set_title(f'{title} - Reward per Episode')
+    ax1.set_title(f'{title} - Reward')
     ax1.legend()
     ax1.grid(True, alpha=0.3)
 
-    # Steps curve
+    # Steps
     ax2.plot(episode_steps, alpha=0.3, color='green', label='Per episode')
     if window > 1:
         smoothed_steps = np.convolve(episode_steps, np.ones(window)/window, mode='valid')
         ax2.plot(range(window-1, len(episode_steps)), smoothed_steps,
-                 color='red', linewidth=2, label=f'Rolling avg (window={window})')
+                 color='red', linewidth=2, label=f'Rolling avg (w={window})')
+    if convergence_ep > 0:
+        ax2.axvline(convergence_ep, color='green', linestyle='--')
     ax2.set_xlabel('Episode')
-    ax2.set_ylabel('Steps to Termination')
+    ax2.set_ylabel('Steps')
     ax2.set_title(f'{title} - Steps per Episode')
     ax2.legend()
     ax2.grid(True, alpha=0.3)
+
+    # Success rate
+    if window > 1:
+        success_rate = np.convolve(episode_successes,
+                                   np.ones(window)/window, mode='valid')
+        ax3.plot(range(window-1, len(episode_successes)), success_rate,
+                 color='purple', linewidth=2, label=f'Success rate (w={window})')
+    else:
+        ax3.plot(episode_successes, color='purple', linewidth=2)
+    if convergence_ep > 0:
+        ax3.axvline(convergence_ep, color='green', linestyle='--',
+                    label=f'Converged @ ep {convergence_ep}')
+    ax3.set_xlabel('Episode')
+    ax3.set_ylabel('Success Rate')
+    ax3.set_title(f'{title} - Success Rate')
+    ax3.set_ylim(-0.05, 1.05)
+    ax3.legend()
+    ax3.grid(True, alpha=0.3)
 
     plt.tight_layout()
     save_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_path, dpi=150)
     plt.close()
-    print(f"Learning curve saved to: {save_path}")
 
 
 def main():
@@ -184,67 +292,92 @@ def main():
         parts = args.start_pos.split(',')
         start_pos = (int(parts[0]), int(parts[1]))
 
+    epsilon_decay_episodes = args.epsilon_decay_episodes or args.episodes
+
     results_dir = Path("results")
     results_dir.mkdir(parents=True, exist_ok=True)
 
     for grid_path in args.GRID:
+        grid_name = grid_path.stem
+
         print(f"\n{'='*60}")
-        print(f"Grid: {grid_path}")
-        print(f"Hyperparameters: α={args.alpha}, γ={args.gamma}, "
-              f"ε={args.epsilon}, ε_decay={args.epsilon_decay}, σ={args.sigma}")
+        print(f"Grid: {grid_path} | Start: {start_pos}")
+        print(f"α={args.alpha}, γ={args.gamma}, ε={args.epsilon} "
+              f"({args.epsilon_decay_mode}), σ={args.sigma}")
         print(f"{'='*60}")
 
-        # Build experiment name
-        grid_name = grid_path.stem
+        # Experiment name
         if args.name:
-            exp_name = args.name
+            exp_name = f"{args.name}_{grid_name}"
         else:
             exp_name = (f"sarsa_{grid_name}_a{args.alpha}_g{args.gamma}"
                         f"_e{args.epsilon}_s{args.sigma}")
 
-        # Initialize environment
+        # Environment with shared reward function
         env = Environment(grid_path, no_gui=True, sigma=args.sigma,
                           target_fps=-1, agent_start_pos=start_pos,
+                          reward_fn=reward_fn,
                           random_seed=args.random_seed)
 
-        # Initialize SARSA agent
+        # BFS distances (for shaping + optimality ratio)
+        grid_cells = Grid.load_grid(grid_path).cells
+        bfs_dist = compute_bfs_distances(grid_cells)
+        optimal_path_length = int(bfs_dist[start_pos])
+        print(f"BFS optimal path from {start_pos}: {optimal_path_length} steps")
+
+        # Agent
         sarsa_agent = SarsaAgent(
             alpha=args.alpha,
             gamma=args.gamma,
             epsilon=args.epsilon,
             epsilon_decay=args.epsilon_decay,
-            epsilon_min=args.epsilon_min
+            epsilon_min=args.epsilon_min,
+            epsilon_decay_mode=args.epsilon_decay_mode,
+            epsilon_decay_episodes=epsilon_decay_episodes,
+            rng_seed=args.random_seed,
         )
 
         # Train
-        episode_rewards, episode_steps = train_sarsa(
-            env, sarsa_agent, args.episodes, args.max_steps, start_pos
+        episode_rewards, episode_steps, episode_successes = train_sarsa(
+            env, sarsa_agent, args.episodes, args.max_steps, start_pos,
+            bfs_dist=bfs_dist, shaping_weight=args.shaping_weight
         )
 
-        # Plot learning curve
-        plot_title = (f"SARSA on {grid_name} "
-                      f"(α={args.alpha}, γ={args.gamma}, ε={args.epsilon}, σ={args.sigma})")
+        # --- Metric 1: Convergence speed ---
+        convergence_ep = detect_convergence(
+            episode_successes,
+            window=args.convergence_window,
+            threshold=args.convergence_threshold
+        )
+
+        # --- Metric 2: Policy optimality ratio (greedy eval) ---
+        eval_results = evaluate_greedy(
+            env, sarsa_agent, start_pos, bfs_dist,
+            max_steps=args.eval_steps,
+            n_eval_episodes=args.eval_episodes
+        )
+
+        # Print results
+        print(f"\n{'─'*40}")
+        print(f"RESULTS: {grid_name}")
+        print(f"{'─'*40}")
+        print(f"  Convergence speed:      episode {convergence_ep} "
+              f"({'not converged' if convergence_ep < 0 else 'converged'})")
+        print(f"  BFS optimal path:       {eval_results['optimal_steps']} steps")
+        print(f"  Avg eval steps:         {eval_results['avg_eval_steps']:.1f}")
+        print(f"  Eval success rate:      {eval_results['success_rate']:.2%}")
+        print(f"  Policy optimality ratio: {eval_results['optimality_ratio']:.4f}")
+        print(f"  Q-table size:           {len(sarsa_agent.q_table)} entries")
+        print(f"  Final epsilon:          {sarsa_agent.epsilon:.4f}")
+        print(f"{'─'*40}\n")
+
+        # Plot
+        plot_title = (f"SARSA {grid_name} "
+                      f"(α={args.alpha} γ={args.gamma} ε={args.epsilon} σ={args.sigma})")
         plot_path = results_dir / f"{exp_name}_learning_curve.png"
-        plot_learning_curve(episode_rewards, episode_steps, plot_title, plot_path)
-
-        # Evaluate trained SARSA agent
-        print(f"\nEvaluating trained SARSA agent on {grid_name}...")
-        Environment.evaluate_agent(grid_path, sarsa_agent, args.eval_steps,
-                                   sigma=args.sigma,
-                                   agent_start_pos=start_pos,
-                                   random_seed=args.random_seed)
-
-        # Optionally evaluate random agent for comparison
-        if args.eval_random:
-            print(f"\nEvaluating Random agent on {grid_name} (for comparison)...")
-            random_agent = RandomAgent()
-            Environment.evaluate_agent(grid_path, random_agent, args.eval_steps,
-                                       sigma=args.sigma,
-                                       agent_start_pos=start_pos,
-                                       random_seed=args.random_seed)
-
-        print(f"\nQ-table size: {len(sarsa_agent.q_table)} entries")
-        print(f"Final epsilon: {sarsa_agent.epsilon:.4f}")
+        plot_learning_curve(episode_rewards, episode_steps, episode_successes,
+                            convergence_ep, plot_title, plot_path)
+        print(f"Plot saved: {plot_path}")
 
 
 if __name__ == '__main__':

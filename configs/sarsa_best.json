@@ -1,0 +1,44 @@
+{
+    "algorithm": "sarsa",
+    "description": "Optimal SARSA hyperparameters found via grid search (alpha, gamma, epsilon sweeps on A1_grid and large_grid)",
+
+    "hyperparameters": {
+        "alpha": 0.1,
+        "gamma": 0.95,
+        "epsilon": 0.05,
+        "epsilon_decay_mode": "fixed"
+    },
+
+    "training": {
+        "episodes": 1000,
+        "max_steps": 1000,
+        "shaping_weight": 3.0
+    },
+
+    "grids": {
+        "A1_grid": {
+            "path": "grid_configs/A1_grid.npy",
+            "start_pos": [1, 12],
+            "bfs_optimal": 28
+        },
+        "large_grid": {
+            "path": "grid_configs/large_grid.npy",
+            "start_pos": [1, 1],
+            "bfs_optimal": 17
+        }
+    },
+
+    "evaluation": {
+        "eval_episodes": 20,
+        "eval_steps": 500,
+        "convergence_window": 50,
+        "convergence_threshold": 0.95
+    },
+
+    "tuning_rationale": {
+        "alpha": "0.1 gives best return; 0.01 too slow, 0.3+ slightly worse due to instability",
+        "gamma": "0.95 needed for long paths (28 steps on A1_grid); 0.6-0.8 fail to propagate reward",
+        "epsilon": "fixed 0.05 best; low exploration sufficient with BFS shaping guiding the agent",
+        "shaping": "BFS potential-based shaping eliminates sparse reward problem, enables fast convergence"
+    }
+}
