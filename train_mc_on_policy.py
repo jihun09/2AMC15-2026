@@ -205,7 +205,7 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
         results_dir = Path("results")
         plot_learning_curve(
             episode_rewards, episode_successes,
-            title=f"MC on-policy | {grid.stem} | ε={epsilon} δ={delta} σ={sigma}",
+            title=f"MC on-policy | {grid.stem} | eps={epsilon} delta={delta} sigma={sigma}",
             save_path=results_dir / f"mc_{grid.stem}_learning_curve_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png",
             convergence_ep=convergence_ep,
         )
