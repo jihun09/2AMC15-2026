@@ -57,11 +57,16 @@ def parse_args():
 
 
 def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
-         sigma: float, random_seed: int, start_pos: tuple[int, int] | None, 
+         sigma: float, random_seed: int, start_pos: tuple[int, int] | None,
          episodes: int, delta: float, epsilon: float, epsilon_decay: float,
          epsilon_min: float, patience: int, shaping_weight: float):
-    """Main loop of the program."""
+    """Main loop of the program.
 
+    Returns a list of per-grid result dicts (agent, episode_rewards,
+    episode_successes, convergence_ep, initial_pos, grid_path) so this
+    function can be imported and called programmatically.
+    """
+    results = []
 
     for grid in grid_paths:
         
@@ -214,7 +219,17 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
         Environment.evaluate_agent(grid, agent, iters, sigma,
                                    agent_start_pos=initial_pos,
                                    random_seed=random_seed)
-    
+
+        results.append({
+            "agent": agent,
+            "episode_rewards": episode_rewards,
+            "episode_successes": episode_successes,
+            "convergence_ep": convergence_ep,
+            "initial_pos": initial_pos,
+            "grid_path": grid,
+        })
+
+    return results
 
 
 if __name__ == '__main__':

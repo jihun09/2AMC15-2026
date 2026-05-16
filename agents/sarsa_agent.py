@@ -1,133 +1,79 @@
-"""SARSA Agent.
+"""SARSA Agent — tabular on-policy TD control.
 
-Tabular on-policy TD control. Uses an extended training interface
-(`select_action` + `learn`) called from `sarsa.py`'s `train_agent`. The
-thin abstract methods inherited from `BaseAgent` are kept compatible so
-the class still satisfies the ABC, but they are not the real entry points.
+Update rule:
+    Q(S, A) <- Q(S, A) + alpha * [R + gamma * Q(S', A') - Q(S, A)]
+
+On terminal transitions the bootstrap is dropped: target = R.
 """
-from collections import defaultdict
 import random
-
-import numpy as np
 
 from agents import BaseAgent
 
 
 class SARSAAgent(BaseAgent):
-    """Tabular SARSA.
+    """Tabular SARSA with multiplicative epsilon decay.
 
-    Update rule:
-        Q(S, A) <- Q(S, A) + alpha * [R + gamma * Q(S', A') - Q(S, A)]
-
-    On terminal transitions the bootstrap is dropped: target = R.
+    State of the table:
+        q_table: dict[(state, action) -> float]
+        Both `state` and `action` are hashable. Default value for any
+        unseen (state, action) key is 0.0.
     """
 
     def __init__(
         self,
         n_actions: int = 4,
         alpha: float = 0.1,
-        gamma: float = 0.95,
+        gamma: float = 0.9,
         epsilon: float = 0.1,
-        epsilon_end: float | None = None,
-        epsilon_decay_episodes: int = 1,
-        q_init: float | None = None,
+        epsilon_decay: float = 1.0,
+        epsilon_min: float = 0.0,
         rng_seed: int | None = None,
     ):
-        """
-        epsilon                — exploration rate. If epsilon_end is None,
-                                 stays fixed at this value (no decay).
-        epsilon_end            — final exploration rate. If set, epsilon
-                                 linearly decays from `epsilon` to this
-                                 value over `epsilon_decay_episodes` calls
-                                 to `start_episode()`.
-        epsilon_decay_episodes — number of episodes over which the decay
-                                 happens. Decay schedule is linear and
-                                 clamps at the end value thereafter.
-        q_init                 — optional initial Q-value for every (s, a).
-                                 If None (default), Q starts at 0. Set to a
-                                 positive value for optimistic initialization.
-        """
         super().__init__()
         self.n_actions = n_actions
         self.alpha = alpha
         self.gamma = gamma
-        self.epsilon_start = epsilon
-        self.epsilon_end = epsilon_end if epsilon_end is not None else epsilon
-        self.epsilon_decay_episodes = max(1, epsilon_decay_episodes)
-        self._episode_count = 0
-        init_val = 0.0 if q_init is None else float(q_init)
-        self.Q: dict = defaultdict(
-            lambda: np.full(self.n_actions, init_val, dtype=float)
-        )
+        self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
+        self.epsilon_min = epsilon_min
+        self.q_table: dict[tuple, float] = {}
         self._rng = random.Random(rng_seed)
 
-    # ---- episode bookkeeping (called by training loop) ----
+    def _q(self, state, action: int) -> float:
+        return self.q_table.get((state, action), 0.0)
 
-    def start_episode(self) -> None:
-        """Advance the internal episode counter. Drives epsilon decay.
-
-        Safe to call once per training episode. If no decay is configured
-        (epsilon_end == epsilon), this is a harmless no-op effect on the
-        policy, but the counter still advances.
-        """
-        self._episode_count += 1
-
-    @property
-    def epsilon(self) -> float:
-        """Current effective exploration rate (after any decay)."""
-        if self.epsilon_decay_episodes <= 1:
-            return self.epsilon_start
-        frac = min(1.0, self._episode_count / self.epsilon_decay_episodes)
-        return self.epsilon_start + (self.epsilon_end - self.epsilon_start) * frac
-
-    # ---- real training-time interface (called by sarsa.py's train_agent) ----
+    def _greedy(self, state) -> int:
+        return max(range(self.n_actions), key=lambda a: self._q(state, a))
 
     def select_action(self, state, training: bool = True) -> int:
-        """Epsilon-greedy during training, greedy during evaluation.
-
-        During training, uses the current (possibly decayed) epsilon.
-        """
+        """Epsilon-greedy during training, greedy during evaluation."""
         if training and self._rng.random() < self.epsilon:
             return self._rng.randint(0, self.n_actions - 1)
-        return int(np.argmax(self.Q[state]))
+        return self._greedy(state)
 
-    def learn(
-        self,
-        state,
-        action: int,
-        reward: float,
-        next_state,
-        next_action: int,
-        done: bool,
-    ) -> None:
-        """Apply one SARSA update from a single transition."""
+    def take_action(self, state) -> int:
+        """Greedy action (no exploration). Used by env.evaluate_agent."""
+        return self._greedy(state)
+
+    def learn(self, state, action: int, reward: float,
+              next_state, next_action: int, done: bool) -> None:
+        """One SARSA update from a single transition."""
         if done:
             target = reward
         else:
-            target = reward + self.gamma * self.Q[next_state][next_action]
-        td_error = target - self.Q[state][action]
-        self.Q[state][action] += self.alpha * td_error
+            target = reward + self.gamma * self._q(next_state, next_action)
+        td_error = target - self._q(state, action)
+        self.q_table[(state, action)] = self._q(state, action) + self.alpha * td_error
 
-    # ---- BaseAgent abstract interface (kept compatible only) ----
+    def decay_epsilon(self) -> None:
+        """Multiplicative epsilon decay; clamps at epsilon_min."""
+        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
-    def take_action(self, state) -> int:
-        """Greedy action. Used by Environment.evaluate_agent during eval.
+    def get_greedy_action(self) -> dict:
+        """Snapshot of the greedy policy for convergence detection.
 
-        Note: this is intentionally greedy (no exploration) so eval
-        reflects the learned policy, not the exploring behavior policy.
-        For training, `sarsa.py`'s `train_agent` calls `select_action` directly.
+        Returns dict[state -> argmax_a q_table[(state, a)]]. Only states
+        that have been visited (have any q_table entry) are included.
         """
-        return self.select_action(state, training=False)
-
-    def update(self, state, reward: float, action: int) -> None:
-        """No-op. The thin BaseAgent.update signature lacks the
-        information SARSA needs (previous state, next action, done).
-
-        Raises if accidentally invoked from `train.py` so the foot-gun
-        is loud rather than silent.
-        """
-        raise RuntimeError(
-            "SARSAAgent.update was called via the thin BaseAgent interface. "
-            "Use sarsa.py's train_agent, which calls SARSAAgent.learn(state, "
-            "action, reward, next_state, next_action, done) instead."
-        )
+        states = {s for (s, _a) in self.q_table.keys()}
+        return {s: self._greedy(s) for s in states}

@@ -1,8 +1,0 @@
-[
-  {"label": "SARSA 1k",              "algo": "sarsa",         "alpha": 0.1, "gamma": 0.99, "epsilon": 0.30, "epsilon_end": 0.01, "epsilon_decay_episodes": 700,  "sigma_train": 0.1, "episodes": 1000, "q_init": 5.0,  "max_steps_train": 1000, "max_steps_eval": 1000},
-  {"label": "Q-learning 1k",         "algo": "qlearning",     "alpha": 0.1, "gamma": 0.99, "epsilon": 0.30, "epsilon_end": 0.01, "epsilon_decay_episodes": 700,  "sigma_train": 0.1, "episodes": 1000, "q_init": 5.0,  "max_steps_train": 1000, "max_steps_eval": 1000},
-  {"label": "SARSA(lambda=0.5) 1k",  "algo": "sarsa-lambda",  "alpha": 0.1, "gamma": 0.99, "epsilon": 0.30, "epsilon_end": 0.01, "epsilon_decay_episodes": 700,  "sigma_train": 0.1, "episodes": 1000, "q_init": 5.0,  "lambda_": 0.5, "max_steps_train": 1000, "max_steps_eval": 1000},
-  {"label": "SARSA(lambda=0.9) 1k",  "algo": "sarsa-lambda",  "alpha": 0.1, "gamma": 0.99, "epsilon": 0.30, "epsilon_end": 0.01, "epsilon_decay_episodes": 700,  "sigma_train": 0.1, "episodes": 1000, "q_init": 5.0,  "lambda_": 0.9, "max_steps_train": 1000, "max_steps_eval": 1000},
-  {"label": "SARSA 2k",              "algo": "sarsa",         "alpha": 0.1, "gamma": 0.99, "epsilon": 0.30, "epsilon_end": 0.01, "epsilon_decay_episodes": 1400, "sigma_train": 0.1, "episodes": 2000, "q_init": 5.0,  "max_steps_train": 1000, "max_steps_eval": 1000},
-  {"label": "SARSA(lambda=0.9) 2k",  "algo": "sarsa-lambda",  "alpha": 0.1, "gamma": 0.99, "epsilon": 0.30, "epsilon_end": 0.01, "epsilon_decay_episodes": 1400, "sigma_train": 0.1, "episodes": 2000, "q_init": 5.0,  "lambda_": 0.9, "max_steps_train": 1000, "max_steps_eval": 1000}
-]
