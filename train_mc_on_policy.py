@@ -12,7 +12,10 @@ from agents.mc_on_policy_agent import McOnPolicyAgent
 from agents.null_agent import NullAgent
 from world.grid import Grid
 from utils import reward_fn, compute_bfs_distances, shaped_reward
+from metrics import (compute_optimality_ratio, extract_visited_states,
+                     plot_learning_curve, print_metrics_summary)
 
+from datetime import datetime # To save every plot with a unique name based on the current timestamp
 
 def parse_args():
     p = ArgumentParser(description="DIC Reinforcement Learning Trainer.")
@@ -28,7 +31,7 @@ def parse_args():
                         "no_gui is not set.")
     p.add_argument("--iter", type=int, default=1000,
                    help="Number of iterations to go through.")
-    p.add_argument("--random_seed", type=int, default=0,
+    p.add_argument("--random_seed", type=int, default=None,
                    help="Random seed value for the environment.")
     p.add_argument("--start_pos", type=str, default=None,
                    help="Agent start position as col,row (e.g. 2,3). "
@@ -51,15 +54,15 @@ def parse_args():
     
     
     return p.parse_args()
- 
+
 
 def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
          sigma: float, random_seed: int, start_pos: tuple[int, int] | None, 
          episodes: int, delta: float, epsilon: float, epsilon_decay: float,
          epsilon_min: float, patience: int, shaping_weight: float):
     """Main loop of the program."""
- 
- 
+
+
     for grid in grid_paths:
         
         # Set up the environment
@@ -70,7 +73,7 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
         
         # 0. Loading the grid
         grid_cells = Grid.load_grid(grid).cells
- 
+
         # Compute BFS distances for reward shaping
         dist = compute_bfs_distances(grid_cells)
         
@@ -78,62 +81,70 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
         agent = McOnPolicyAgent(epsilon, epsilon_decay, epsilon_min)
         agent.create_state_action_space(grid_cells)
         indx_position = agent.state_action_indexer
- 
+
         # 2. Initialisation of variables for tracking success rate and average steps every 100 episodes
         window_successes = 0
         window_steps = []
- 
+        episode_rewards = []
+        episode_successes = []
+
         # 3. Initialisation of variables for stopping criterion
         prev_greedy_policy = None
         stable_count = 0
- 
+
         for _  in trange(episodes):
             # Always reset the environment to initial state
             initial_pos = env.reset()
             state = initial_pos
- 
+
             # generate a lookup_table of visits in an episode
             look_up = agent.look_up_first_visited()
- 
+
             # generate an episode 
             states = []
             actions_taken = []
             rewards = []
- 
+
             # 2. Episode generation
             for step in range(iters):
- 
+
                 state_idx = indx_position[state]
- 
+
                 action = agent.take_action(state)
                 new_state, reward, terminated, info = env.step(action)
                 actual_action = info['actual_action']
                 reward = shaped_reward(reward, state, new_state, terminated, dist, shaping_weight)
- 
+
                 key = (state_idx, actual_action)
- 
+
                 # due to stochasticity, we only train the model on the legal behaviour
                 # we only store legal events
                 if key in look_up: 
                     # update the lookup; updates when the value was not yet updated
                     if look_up[key] == -1:
                         look_up[key] = len(rewards)
- 
+
                     states.append(state)
                     actions_taken.append(actual_action)
                     rewards.append(reward)
- 
+
                 # new state after a step
                 state = new_state
- 
+
                 if terminated:
                     window_successes += 1
                     window_steps.append(step)
-                    break 
+                    episode_successes.append(1)
+                    break
+
+            else:
+                episode_successes.append(0)
+
+            episode_rewards.append(sum(rewards))
                 
                 # 3. evaluating episode and updating the agent
                 # number of steps
- 
+
             g = 0
             steps_taken = len(rewards)
             for i in range(steps_taken-1, -1, -1): # we compute the return backwards as it is easier for its evaluation
@@ -142,17 +153,17 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
                 action_i = actions_taken[i]
                 state_i_idx = indx_position[state_i]
                 key = (state_i_idx, action_i)
- 
- 
+
+
                 # update only if we encounter a first visit pair
                 # state_i: tuple[int, int]
                 # g: float
                 # action_i: int
                 if look_up[key] == i: 
                     agent.update(state_i, g, action_i)
- 
+
             agent.decay_epsilon()
- 
+
             # Stopping criterion: greedy policy unchanged for `patience` consecutive episodes
             current_greedy_policy = agent.get_greedy_action()
             if current_greedy_policy == prev_greedy_policy:
@@ -164,7 +175,7 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
             if stable_count >= patience:
                 print(f"Policy stable for {patience} consecutive episodes. Stopping at episode {_ + 1}.")
                 break
- 
+
             # get the summary every 100 episodes 
             episode_num = _ + 1
             if episode_num % 500 == 0:
@@ -176,13 +187,34 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
                       f"Avg steps (successes): {avg_steps}")
                 window_successes = 0
                 window_steps = []
- 
- 
+
+
+        # --- Metrics ---
+        convergence_ep = _ + 1 if stable_count >= patience else -1
+
+        optimality = compute_optimality_ratio(
+            env, agent, initial_pos, dist,
+            n_eval_episodes=10, max_steps=iters
+        )
+
+        visited_states, total_states = extract_visited_states(agent)
+
+        print_metrics_summary("MC on-policy", grid.stem, convergence_ep,
+                              optimality, visited_states, total_states)
+
+        results_dir = Path("results")
+        plot_learning_curve(
+            episode_rewards, episode_successes,
+            title=f"MC on-policy | {grid.stem} | eps={epsilon} delta={delta} sigma={sigma}",
+            save_path=results_dir / f"mc_{grid.stem}_learning_curve_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png",
+            convergence_ep=convergence_ep,
+        )
+
         # Evaluate the agent
         Environment.evaluate_agent(grid, agent, iters, sigma,
                                    agent_start_pos=initial_pos,
                                    random_seed=random_seed)
-
+    
 
 
 if __name__ == '__main__':
@@ -194,81 +226,3 @@ if __name__ == '__main__':
     main(args.GRID, args.no_gui, args.iter, args.fps, args.sigma,
          args.random_seed, start_pos, args.episodes, args.delta, args.epsilon,
          args.epsilon_decay, args.epsilon_min, args.patience, args.shaping_weight)
-
-
-def train_mc(grid_path, start_pos, setup: dict, seed: int, patience: int):
-    """Uniform adapter for run_matrix.py.
-
-    Wraps the existing main() training loop into a function that returns
-    (trained_agent, convergence_episode).
-    `setup` keys: epsilon, epsilon_decay, epsilon_min, delta (or gamma),
-                  episodes, max_steps, shaping_weight, sigma_train.
-    """
-    env = Environment(
-        grid_fp=grid_path, no_gui=True,
-        sigma=setup.get("sigma_train", 0.1),
-        target_fps=-1, agent_start_pos=start_pos,
-        random_seed=seed, reward_fn=reward_fn,
-    )
-    grid_cells = Grid.load_grid(grid_path).cells
-    dist = compute_bfs_distances(grid_cells)
-
-    agent = McOnPolicyAgent(
-        epsilon=setup["epsilon"],
-        epsilon_decay=setup.get("epsilon_decay", 0.999),
-        epsilon_min=setup.get("epsilon_min", 0.05),
-    )
-    agent.create_state_action_space(grid_cells)
-    indx_position = agent.state_action_indexer
-
-    prev_greedy = None
-    stable_count = 0
-    convergence_episode = None
-    delta = setup.get("delta", setup.get("gamma", 0.95))
-    sw = setup.get("shaping_weight", 0.0)
-
-    for ep in range(setup["episodes"]):
-        env.reset()
-        look_up = agent.look_up_first_visited()
-        state = env.agent_pos
-        states, actions_taken, rewards = [], [], []
-
-        for step in range(setup["max_steps"]):
-            state_idx = indx_position[state]
-            action = agent.take_action(state)
-            new_state, reward, terminated, info = env.step(action)
-            actual_action = info["actual_action"]
-            if sw:
-                reward = shaped_reward(reward, state, new_state,
-                                       terminated, dist, sw)
-            key = (state_idx, actual_action)
-            if key in look_up:
-                if look_up[key] == -1:
-                    look_up[key] = len(rewards)
-                states.append(state)
-                actions_taken.append(actual_action)
-                rewards.append(reward)
-            state = new_state
-            if terminated:
-                break
-
-        g = 0.0
-        for i in range(len(rewards) - 1, -1, -1):
-            g = delta * g + rewards[i]
-            si, ai = states[i], actions_taken[i]
-            key = (indx_position[si], ai)
-            if look_up[key] == i:
-                agent.update(si, g, ai)
-        agent.decay_epsilon()
-
-        cur_greedy = agent.get_greedy_action()
-        if cur_greedy == prev_greedy:
-            stable_count += 1
-        else:
-            stable_count = 0
-        prev_greedy = cur_greedy
-        if stable_count >= patience and convergence_episode is None:
-            convergence_episode = ep + 1
-            break
-
-    return agent, convergence_episode
