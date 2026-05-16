@@ -85,7 +85,7 @@ def compute_optimality_ratio(
     agent: BaseAgent,
     start_pos: tuple[int, int],
     bfs_dist: np.ndarray,
-    n_eval_episodes: int = 10,
+    n_eval_episodes: int = 100,
     max_steps: int = 500,
 ) -> dict:
     """Evaluate the trained agent and compute the policy optimality ratio.
@@ -100,6 +100,7 @@ def compute_optimality_ratio(
     optimal_steps = int(bfs_dist[start_pos])
     actual_steps_list = []
     success_flags = []
+    cumulative_rewards = [] # stores cumulative rewards accross all tested iterations of the same environment
 
     for _ in range(n_eval_episodes):
         state = env.reset(agent_start_pos=start_pos)
@@ -119,9 +120,13 @@ def compute_optimality_ratio(
                 break
         actual_steps_list.append(steps)
         success_flags.append(int(reached))
+        cumulative_rewards.append(env.world_stats["cumulative_reward"])
 
     success_rate = np.mean(success_flags)
     successful_steps = [s for s, ok in zip(actual_steps_list, success_flags) if ok]
+    mean_cumulative_rewards = float(np.mean(cumulative_rewards))
+    std_cumulative_rewards = float(np.std(cumulative_rewards))
+
 
     if successful_steps:
         mean_steps = float(np.mean(successful_steps))
@@ -142,6 +147,8 @@ def compute_optimality_ratio(
         "success_rate":          float(success_rate),
         "mean_optimality_ratio": mean_ratio,
         "std_optimality_ratio":  std_ratio,
+        "mean_cumulative_rewards" : mean_cumulative_rewards,
+        "std_cumulative_rewards" : std_cumulative_rewards
     }
 
 
@@ -216,6 +223,8 @@ def print_metrics_summary(
     print(f"  Eval success rate:        {optimality['success_rate']:.2%}")
     print(f"  Mean optimality ratio:    {optimality['mean_optimality_ratio']:.4f} "
           f"± {optimality['std_optimality_ratio']:.4f}")
+    print(f"  Mean Cumulative rewards:    {optimality['mean_cumulative_rewards']:.4f} "
+          f"± {optimality['std_cumulative_rewards']:.4f}")
     print(f"  State coverage:           {n_visited}/{total_states} "
           f"({coverage:.1f}%)")
     print(f"{'='*50}\n")

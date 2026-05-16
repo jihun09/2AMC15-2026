@@ -7,6 +7,7 @@ from pathlib import Path
 from tqdm import trange
 import numpy as np
 
+
 from world import Environment
 from agents.mc_on_policy_agent import McOnPolicyAgent
 from agents.null_agent import NullAgent
@@ -37,7 +38,7 @@ def parse_args():
                    help="Agent start position as col,row (e.g. 2,3). "
                         "If not set, the GUI lets you click to place it. "
                         "In no_gui mode, defaults to random placement.")
-    p.add_argument("--episodes", type=int, default=1,
+    p.add_argument("--episodes", type=int, default=1000,
                    help="Number of episodes to be analysed by the agent.")
     p.add_argument("--delta", type=float, default=0.9,
                    help="Discount factor of reward.")
@@ -45,7 +46,7 @@ def parse_args():
                    help="Determines how often the agent performs greedy actions.")
     p.add_argument("--epsilon_decay", type=float, default=0.999,
                    help="Multiplicative decay factor applied to epsilon after each episode.")
-    p.add_argument("--epsilon_min", type=float, default=0.05,
+    p.add_argument("--epsilon_min", type=float, default=0.0,
                    help="Minimum value epsilon can decay to.")
     p.add_argument("--patience", type=int, default=100,
                    help="Stop training if greedy policy is stable for this many consecutive episodes.")
@@ -113,7 +114,7 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
                 action = agent.take_action(state)
                 new_state, reward, terminated, info = env.step(action)
                 actual_action = info['actual_action']
-                reward = shaped_reward(reward, state, new_state, terminated, dist, shaping_weight)
+                # reward = shaped_reward(reward, state, new_state, terminated, dist, shaping_weight) Uncoment it to add reward shaping
 
                 key = (state_idx, actual_action)
 
