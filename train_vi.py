@@ -30,6 +30,10 @@ def parse_args():
                         "no_gui is not set.")
     p.add_argument("--iter", type=int, default=1000,
                    help="Number of iterations to go through.")
+    p.add_argument("--gamma", type=float, default=0.9,
+                   help="Discount factor for Value Iteration.")
+    p.add_argument("--theta", type=float, default=1e-6,
+                   help="Convergence threshold for Value Iteration.")
     p.add_argument("--random_seed", type=int, default=0,
                    help="Random seed value for the environment.")
     p.add_argument("--start_pos", type=str, default=None,
@@ -40,7 +44,8 @@ def parse_args():
 
 
 def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
-         sigma: float, random_seed: int, start_pos: tuple[int, int] | None):
+         sigma: float, gamma: float, theta: float,
+         random_seed: int, start_pos: tuple[int, int] | None):
     """Main loop of the program."""
 
     for grid in grid_paths:
@@ -52,7 +57,7 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
         
         # Initialize agent — VI plans offline from the grid before any interaction
         grid_array = Grid.load_grid(grid).cells
-        agent = ValueIterationAgent(grid_array, sigma=sigma)
+        agent = ValueIterationAgent(grid_array, sigma=sigma, gamma=gamma, theta=theta)
         
         # Always reset the environment to initial state
         initial_pos = env.reset()
@@ -120,4 +125,4 @@ if __name__ == '__main__':
         parts = args.start_pos.split(',')
         start_pos = (int(parts[0]), int(parts[1]))
     main(args.GRID, args.no_gui, args.iter, args.fps, args.sigma,
-         args.random_seed, start_pos)
+         args.gamma, args.theta, args.random_seed, start_pos)
