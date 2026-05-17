@@ -1,0 +1,6 @@
+[
+  {"label": "SARSA",              "algo": "sarsa",         "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05,                                                       "sigma_train": 0.1, "episodes": 1000},
+  {"label": "Q-learning",         "algo": "qlearning",     "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05,                                                       "sigma_train": 0.1, "episodes": 1000},
+  {"label": "SARSA(lambda=0.5)",  "algo": "sarsa-lambda",  "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "lambda_": 0.5,                                       "sigma_train": 0.1, "episodes": 1000},
+  {"label": "SARSA(lambda=0.9)",  "algo": "sarsa-lambda",  "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "lambda_": 0.9,                                       "sigma_train": 0.1, "episodes": 1000}
+]

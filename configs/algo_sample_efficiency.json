@@ -1,0 +1,14 @@
+[
+  {"label": "SARSA 100 eps",             "algo": "sarsa",         "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "sigma_train": 0.1, "episodes": 100},
+  {"label": "SARSA 200 eps",             "algo": "sarsa",         "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "sigma_train": 0.1, "episodes": 200},
+  {"label": "SARSA 500 eps",             "algo": "sarsa",         "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "sigma_train": 0.1, "episodes": 500},
+  {"label": "SARSA 1000 eps",            "algo": "sarsa",         "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "sigma_train": 0.1, "episodes": 1000},
+  {"label": "Q-learning 100 eps",        "algo": "qlearning",     "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "sigma_train": 0.1, "episodes": 100},
+  {"label": "Q-learning 200 eps",        "algo": "qlearning",     "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "sigma_train": 0.1, "episodes": 200},
+  {"label": "Q-learning 500 eps",        "algo": "qlearning",     "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "sigma_train": 0.1, "episodes": 500},
+  {"label": "Q-learning 1000 eps",       "algo": "qlearning",     "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "sigma_train": 0.1, "episodes": 1000},
+  {"label": "SARSA(0.5) 100 eps",        "algo": "sarsa-lambda",  "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "lambda_": 0.5, "sigma_train": 0.1, "episodes": 100},
+  {"label": "SARSA(0.5) 200 eps",        "algo": "sarsa-lambda",  "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "lambda_": 0.5, "sigma_train": 0.1, "episodes": 200},
+  {"label": "SARSA(0.5) 500 eps",        "algo": "sarsa-lambda",  "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "lambda_": 0.5, "sigma_train": 0.1, "episodes": 500},
+  {"label": "SARSA(0.5) 1000 eps",       "algo": "sarsa-lambda",  "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05, "lambda_": 0.5, "sigma_train": 0.1, "episodes": 1000}
+]
