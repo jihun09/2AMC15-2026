@@ -32,6 +32,8 @@ class ValueIterationAgent(BaseAgent):
         super().__init__()
         self.policy: dict[tuple[int, int], int] = {}
         self.V: dict[tuple[int, int], float] = {}
+        self.iterations_to_converge: int | None = None
+        self.final_delta: float | None = None
         self._train(grid, sigma, gamma, theta, max_iterations)
 
     # ------------------------------------------------------------------
@@ -131,10 +133,14 @@ class ValueIterationAgent(BaseAgent):
             if delta < theta:
                 print(f"Value Iteration converged after {iteration + 1} sweeps "
                       f"(delta={delta:.2e}).")
+                self.iterations_to_converge = iteration + 1
+                self.final_delta = delta
                 break
         else:
             print(f"Value Iteration reached max_iterations={max_iterations} "
                   f"without full convergence (delta={delta:.2e}).")
+            self.iterations_to_converge = max_iterations
+            self.final_delta = delta
 
         # Greedy policy extraction
         for s in states:
