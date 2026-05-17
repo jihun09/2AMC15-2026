@@ -1,0 +1,538 @@
+================================================================
+Experiment 2.4 — Large Grid Stochasticity Resilience — Sun May 17 20:12:57 CEST 2026
+Grid: grid_configs/large_grid.npy | Sigmas: 0.1, 0.25
+================================================================
+
+=== [VI] sigma=0.1 gamma=0.9 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/Users/ranjani/Desktop/Projects/Masters - Data Science and Artificial Intelligence/Reinforcement Learning/2AMC15-2026/world/environment.py:66: UserWarning: No reward function provided. Using default reward.
+  warn("No reward function provided. Using default reward.")
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+Value Iteration converged after 30 sweeps (delta=2.99e-07).
+  0%|          | 0/2000 [00:00<?, ?it/s]  1%|          | 15/2000 [00:00<00:00, 85714.66it/s]
+
+==================================================
+  Value Iteration | large_grid
+==================================================
+  Convergence speed:        not converged
+  BFS optimal path:         14 steps
+  Mean actual steps:        15.6 ± 1.7
+  Eval success rate:        100.00%
+  Mean optimality ratio:    0.8974 ± 0.0969
+  Mean Cumulative rewards:    -7.0000 ± 4.4497
+  State coverage:           130/130 (100.0%)
+==================================================
+
+Evaluating agent:   0%|          | 0/2000 [00:00<?, ?it/s]Evaluating agent:   1%|          | 15/2000 [00:00<00:00, 452622.73it/s]
+Evaluation complete. Results:
+cumulative_reward: -5
+total_steps: 16
+total_agent_moves: 16
+total_failed_moves: 0
+total_targets_reached: 1
+targets_remaining: 0
+
+=== [VI] sigma=0.25 gamma=0.9 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/Users/ranjani/Desktop/Projects/Masters - Data Science and Artificial Intelligence/Reinforcement Learning/2AMC15-2026/world/environment.py:66: UserWarning: No reward function provided. Using default reward.
+  warn("No reward function provided. Using default reward.")
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+Value Iteration converged after 39 sweeps (delta=8.30e-07).
+  0%|          | 0/2000 [00:00<?, ?it/s]  1%|          | 16/2000 [00:00<00:00, 84947.93it/s]
+
+==================================================
+  Value Iteration | large_grid
+==================================================
+  Convergence speed:        not converged
+  BFS optimal path:         14 steps
+  Mean actual steps:        18.8 ± 2.2
+  Eval success rate:        100.00%
+  Mean optimality ratio:    0.7447 ± 0.0864
+  Mean Cumulative rewards:    -16.6000 ± 8.8340
+  State coverage:           130/130 (100.0%)
+==================================================
+
+Evaluating agent:   0%|          | 0/2000 [00:00<?, ?it/s]Evaluating agent:   1%|          | 16/2000 [00:00<00:00, 482797.58it/s]
+Evaluation complete. Results:
+cumulative_reward: -10
+total_steps: 17
+total_agent_moves: 16
+total_failed_moves: 1
+total_targets_reached: 1
+targets_remaining: 0
+
+=== [MC] sigma=0.1 iter=500 eps=0.05 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+  0%|          | 0/1000 [00:00<?, ?it/s]  8%|▊         | 76/1000 [00:00<00:01, 753.70it/s] 24%|██▎       | 235/1000 [00:00<00:00, 1261.39it/s]
+/Users/ranjani/Desktop/Projects/Masters - Data Science and Artificial Intelligence/Reinforcement Learning/2AMC15-2026/world/environment.py:66: UserWarning: No reward function provided. Using default reward.
+  warn("No reward function provided. Using default reward.")
+Policy stable for 100 consecutive episodes. Stopping at episode 236.
+
+==================================================
+  MC on-policy | large_grid
+==================================================
+  Convergence speed:        episode 236
+  BFS optimal path:         14 steps
+  Mean actual steps:        16.6 ± 1.9
+  Eval success rate:        100.00%
+  Mean optimality ratio:    0.8434 ± 0.0942
+  Mean Cumulative rewards:    82.0000 ± 5.0200
+  State coverage:           111/131 (84.7%)
+==================================================
+
+Learning curve saved: results/mc_large_grid_learning_curve_20260517_201258.png
+Evaluating agent:   0%|          | 0/500 [00:00<?, ?it/s]Evaluating agent:   3%|▎         | 15/500 [00:00<00:00, 205603.14it/s]
+Evaluation complete. Results:
+cumulative_reward: -5
+total_steps: 16
+total_agent_moves: 16
+total_failed_moves: 0
+total_targets_reached: 1
+targets_remaining: 0
+
+=== [MC] sigma=0.1 iter=500 eps=0.2 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+  0%|          | 0/1000 [00:00<?, ?it/s] 16%|█▋        | 165/1000 [00:00<00:00, 1648.71it/s] 18%|█▊        | 176/1000 [00:00<00:00, 1676.41it/s]
+/Users/ranjani/Desktop/Projects/Masters - Data Science and Artificial Intelligence/Reinforcement Learning/2AMC15-2026/world/environment.py:66: UserWarning: No reward function provided. Using default reward.
+  warn("No reward function provided. Using default reward.")
+Policy stable for 100 consecutive episodes. Stopping at episode 177.
+
+==================================================
+  MC on-policy | large_grid
+==================================================
+  Convergence speed:        episode 177
+  BFS optimal path:         14 steps
+  Mean actual steps:        18.9 ± 3.8
+  Eval success rate:        100.00%
+  Mean optimality ratio:    0.7407 ± 0.1492
+  Mean Cumulative rewards:    77.7000 ± 6.1327
+  State coverage:           127/131 (96.9%)
+==================================================
+
+Learning curve saved: results/mc_large_grid_learning_curve_20260517_201259.png
+Evaluating agent:   0%|          | 0/500 [00:00<?, ?it/s]Evaluating agent:   4%|▍         | 20/500 [00:00<00:00, 229824.88it/s]
+Evaluation complete. Results:
+cumulative_reward: -14
+total_steps: 21
+total_agent_moves: 20
+total_failed_moves: 1
+total_targets_reached: 1
+targets_remaining: 0
+
+=== [MC] sigma=0.1 iter=2000 eps=0.05 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+  0%|          | 0/1000 [00:00<?, ?it/s]  2%|▎         | 25/1000 [00:00<00:03, 248.46it/s]  5%|▌         | 52/1000 [00:00<00:03, 260.43it/s] 17%|█▋        | 169/1000 [00:00<00:01, 588.01it/s]
+/Users/ranjani/Desktop/Projects/Masters - Data Science and Artificial Intelligence/Reinforcement Learning/2AMC15-2026/world/environment.py:66: UserWarning: No reward function provided. Using default reward.
+  warn("No reward function provided. Using default reward.")
+Policy stable for 100 consecutive episodes. Stopping at episode 170.
+
+==================================================
+  MC on-policy | large_grid
+==================================================
+  Convergence speed:        episode 170
+  BFS optimal path:         14 steps
+  Mean actual steps:        18.1 ± 2.7
+  Eval success rate:        100.00%
+  Mean optimality ratio:    0.7735 ± 0.1138
+  Mean Cumulative rewards:    80.9000 ± 4.7634
+  State coverage:           125/131 (95.4%)
+==================================================
+
+Learning curve saved: results/mc_large_grid_learning_curve_20260517_201300.png
+Evaluating agent:   0%|          | 0/2000 [00:00<?, ?it/s]Evaluating agent:   1%|          | 15/2000 [00:00<00:00, 182361.04it/s]
+Evaluation complete. Results:
+cumulative_reward: -5
+total_steps: 16
+total_agent_moves: 16
+total_failed_moves: 0
+total_targets_reached: 1
+targets_remaining: 0
+
+=== [MC] sigma=0.1 iter=2000 eps=0.2 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+  0%|          | 0/1000 [00:00<?, ?it/s]  2%|▏         | 22/1000 [00:00<00:04, 216.12it/s]  5%|▍         | 46/1000 [00:00<00:04, 224.87it/s]  7%|▋         | 72/1000 [00:00<00:03, 238.09it/s] 12%|█▏        | 116/1000 [00:00<00:02, 315.88it/s] 26%|██▋       | 265/1000 [00:00<00:01, 733.23it/s] 34%|███▍      | 342/1000 [00:00<00:01, 601.92it/s]
+/Users/ranjani/Desktop/Projects/Masters - Data Science and Artificial Intelligence/Reinforcement Learning/2AMC15-2026/world/environment.py:66: UserWarning: No reward function provided. Using default reward.
+  warn("No reward function provided. Using default reward.")
+Policy stable for 100 consecutive episodes. Stopping at episode 343.
+
+==================================================
+  MC on-policy | large_grid
+==================================================
+  Convergence speed:        episode 343
+  BFS optimal path:         14 steps
+  Mean actual steps:        47.6 ± 5.5
+  Eval success rate:        100.00%
+  Mean optimality ratio:    0.2941 ± 0.0341
+  Mean Cumulative rewards:    44.6000 ± 11.7320
+  State coverage:           129/131 (98.5%)
+==================================================
+
+Learning curve saved: results/mc_large_grid_learning_curve_20260517_201301.png
+Evaluating agent:   0%|          | 0/2000 [00:00<?, ?it/s]Evaluating agent:   2%|▏         | 42/2000 [00:00<00:00, 325620.64it/s]
+Evaluation complete. Results:
+cumulative_reward: -44
+total_steps: 43
+total_agent_moves: 40
+total_failed_moves: 3
+total_targets_reached: 1
+targets_remaining: 0
+
+=== [MC] sigma=0.25 iter=500 eps=0.05 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+  0%|          | 0/1000 [00:00<?, ?it/s] 22%|██▏       | 215/1000 [00:00<00:00, 2143.63it/s] 33%|███▎      | 326/1000 [00:00<00:00, 2134.44it/s]
+/Users/ranjani/Desktop/Projects/Masters - Data Science and Artificial Intelligence/Reinforcement Learning/2AMC15-2026/world/environment.py:66: UserWarning: No reward function provided. Using default reward.
+  warn("No reward function provided. Using default reward.")
+Policy stable for 100 consecutive episodes. Stopping at episode 327.
+
+==================================================
+  MC on-policy | large_grid
+==================================================
+  Convergence speed:        episode 327
+  BFS optimal path:         14 steps
+  Mean actual steps:        19.1 ± 3.6
+  Eval success rate:        100.00%
+  Mean optimality ratio:    0.7330 ± 0.1367
+  Mean Cumulative rewards:    75.9000 ± 7.6609
+  State coverage:           116/131 (88.5%)
+==================================================
+
+Learning curve saved: results/mc_large_grid_learning_curve_20260517_201302.png
+Evaluating agent:   0%|          | 0/500 [00:00<?, ?it/s]Evaluating agent:   4%|▍         | 21/500 [00:00<00:00, 221307.50it/s]
+Evaluation complete. Results:
+cumulative_reward: -19
+total_steps: 22
+total_agent_moves: 20
+total_failed_moves: 2
+total_targets_reached: 1
+targets_remaining: 0
+
+=== [MC] sigma=0.25 iter=500 eps=0.2 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+  0%|          | 0/1000 [00:00<?, ?it/s] 19%|█▉        | 191/1000 [00:00<00:00, 1904.80it/s] 23%|██▎       | 227/1000 [00:00<00:00, 1931.70it/s]
+/Users/ranjani/Desktop/Projects/Masters - Data Science and Artificial Intelligence/Reinforcement Learning/2AMC15-2026/world/environment.py:66: UserWarning: No reward function provided. Using default reward.
+  warn("No reward function provided. Using default reward.")
+Policy stable for 100 consecutive episodes. Stopping at episode 228.
+
+==================================================
+  MC on-policy | large_grid
+==================================================
+  Convergence speed:        episode 228
+  BFS optimal path:         14 steps
+  Mean actual steps:        21.6 ± 5.1
+  Eval success rate:        100.00%
+  Mean optimality ratio:    0.6481 ± 0.1519
+  Mean Cumulative rewards:    72.2000 ± 9.2282
+  State coverage:           119/131 (90.8%)
+==================================================
+
+Learning curve saved: results/mc_large_grid_learning_curve_20260517_201302.png
+Evaluating agent:   0%|          | 0/500 [00:00<?, ?it/s]Evaluating agent:   6%|▌         | 29/500 [00:00<00:00, 270901.59it/s]
+Evaluation complete. Results:
+cumulative_reward: -27
+total_steps: 30
+total_agent_moves: 28
+total_failed_moves: 2
+total_targets_reached: 1
+targets_remaining: 0
+
+=== [MC] sigma=0.25 iter=2000 eps=0.05 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+  0%|          | 0/1000 [00:00<?, ?it/s]  2%|▎         | 25/1000 [00:00<00:03, 246.09it/s]  5%|▌         | 50/1000 [00:00<00:03, 248.12it/s]  9%|▉         | 88/1000 [00:00<00:02, 307.97it/s] 18%|█▊        | 181/1000 [00:00<00:01, 489.82it/s]
+/Users/ranjani/Desktop/Projects/Masters - Data Science and Artificial Intelligence/Reinforcement Learning/2AMC15-2026/world/environment.py:66: UserWarning: No reward function provided. Using default reward.
+  warn("No reward function provided. Using default reward.")
+Policy stable for 100 consecutive episodes. Stopping at episode 182.
+
+==================================================
+  MC on-policy | large_grid
+==================================================
+  Convergence speed:        episode 182
+  BFS optimal path:         14 steps
+  Mean actual steps:        47.4 ± 8.6
+  Eval success rate:        100.00%
+  Mean optimality ratio:    0.2954 ± 0.0538
+  Mean Cumulative rewards:    30.4000 ± 22.7561
+  State coverage:           106/131 (80.9%)
+==================================================
+
+Learning curve saved: results/mc_large_grid_learning_curve_20260517_201303.png
+Evaluating agent:   0%|          | 0/2000 [00:00<?, ?it/s]Evaluating agent:   2%|▏         | 46/2000 [00:00<00:00, 330939.94it/s]
+Evaluation complete. Results:
+cumulative_reward: -56
+total_steps: 47
+total_agent_moves: 42
+total_failed_moves: 5
+total_targets_reached: 1
+targets_remaining: 0
+
+=== [MC] sigma=0.25 iter=2000 eps=0.2 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+  0%|          | 0/1000 [00:00<?, ?it/s]  2%|▏         | 23/1000 [00:00<00:04, 228.42it/s]  5%|▍         | 47/1000 [00:00<00:04, 234.02it/s]  7%|▋         | 71/1000 [00:00<00:03, 236.24it/s] 10%|▉         | 96/1000 [00:00<00:03, 240.90it/s] 31%|███       | 310/1000 [00:00<00:00, 921.54it/s] 36%|███▌      | 360/1000 [00:00<00:00, 683.09it/s]
+/Users/ranjani/Desktop/Projects/Masters - Data Science and Artificial Intelligence/Reinforcement Learning/2AMC15-2026/world/environment.py:66: UserWarning: No reward function provided. Using default reward.
+  warn("No reward function provided. Using default reward.")
+Policy stable for 100 consecutive episodes. Stopping at episode 361.
+
+==================================================
+  MC on-policy | large_grid
+==================================================
+  Convergence speed:        episode 361
+  BFS optimal path:         14 steps
+  Mean actual steps:        21.6 ± 3.7
+  Eval success rate:        100.00%
+  Mean optimality ratio:    0.6481 ± 0.1100
+  Mean Cumulative rewards:    70.6000 ± 5.1225
+  State coverage:           130/131 (99.2%)
+==================================================
+
+Learning curve saved: results/mc_large_grid_learning_curve_20260517_201304.png
+Evaluating agent:   0%|          | 0/2000 [00:00<?, ?it/s]Evaluating agent:   1%|          | 21/2000 [00:00<00:00, 233016.89it/s]
+Evaluation complete. Results:
+cumulative_reward: -19
+total_steps: 22
+total_agent_moves: 20
+total_failed_moves: 2
+total_targets_reached: 1
+targets_remaining: 0
+
+=== [SARSA] sigma=0.1 alpha=0.05 eps=0.05 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+============================================================
+Grid: grid_configs/large_grid.npy | Start: (1, 12)
+α=0.05, γ=0.9, ε=0.05 (fixed), σ=0.1
+============================================================
+BFS optimal path from (1, 12): 14 steps
+Training SARSA:   0%|          | 0/1000 [00:00<?, ?it/s]Training SARSA:  45%|████▍     | 446/1000 [00:00<00:00, 4459.03it/s]Training SARSA: 100%|██████████| 1000/1000 [00:00<00:00, 6873.14it/s]
+
+────────────────────────────────────────
+RESULTS: large_grid
+────────────────────────────────────────
+  Convergence speed:      episode 50 (converged)
+  BFS optimal path:       14 steps
+  Avg eval steps:         15.8
+  Eval success rate:      100.00%
+  Policy optimality ratio: 0.8861
+  Q-table size:           524 entries
+  Final epsilon:          0.0500
+────────────────────────────────────────
+
+Plot saved: results/sarsa_large_grid_a0.05_g0.9_e0.05_s0.1_learning_curve.png
+
+=== [SARSA] sigma=0.1 alpha=0.05 eps=0.2 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+============================================================
+Grid: grid_configs/large_grid.npy | Start: (1, 12)
+α=0.05, γ=0.9, ε=0.2 (fixed), σ=0.1
+============================================================
+BFS optimal path from (1, 12): 14 steps
+Training SARSA:   0%|          | 0/1000 [00:00<?, ?it/s]Training SARSA:  32%|███▏      | 316/1000 [00:00<00:00, 3158.51it/s]Training SARSA: 100%|██████████| 1000/1000 [00:00<00:00, 6320.55it/s]
+
+────────────────────────────────────────
+RESULTS: large_grid
+────────────────────────────────────────
+  Convergence speed:      episode 50 (converged)
+  BFS optimal path:       14 steps
+  Avg eval steps:         15.6
+  Eval success rate:      100.00%
+  Policy optimality ratio: 0.8974
+  Q-table size:           524 entries
+  Final epsilon:          0.2000
+────────────────────────────────────────
+
+Plot saved: results/sarsa_large_grid_a0.05_g0.9_e0.2_s0.1_learning_curve.png
+
+=== [SARSA] sigma=0.1 alpha=0.2 eps=0.05 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+============================================================
+Grid: grid_configs/large_grid.npy | Start: (1, 12)
+α=0.2, γ=0.9, ε=0.05 (fixed), σ=0.1
+============================================================
+BFS optimal path from (1, 12): 14 steps
+Training SARSA:   0%|          | 0/1000 [00:00<?, ?it/s]Training SARSA:  99%|█████████▉| 994/1000 [00:00<00:00, 9936.12it/s]Training SARSA: 100%|██████████| 1000/1000 [00:00<00:00, 9932.73it/s]
+
+────────────────────────────────────────
+RESULTS: large_grid
+────────────────────────────────────────
+  Convergence speed:      episode 50 (converged)
+  BFS optimal path:       14 steps
+  Avg eval steps:         15.5
+  Eval success rate:      100.00%
+  Policy optimality ratio: 0.9032
+  Q-table size:           524 entries
+  Final epsilon:          0.0500
+────────────────────────────────────────
+
+Plot saved: results/sarsa_large_grid_a0.2_g0.9_e0.05_s0.1_learning_curve.png
+
+=== [SARSA] sigma=0.1 alpha=0.2 eps=0.2 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+============================================================
+Grid: grid_configs/large_grid.npy | Start: (1, 12)
+α=0.2, γ=0.9, ε=0.2 (fixed), σ=0.1
+============================================================
+BFS optimal path from (1, 12): 14 steps
+Training SARSA:   0%|          | 0/1000 [00:00<?, ?it/s]Training SARSA:  88%|████████▊ | 875/1000 [00:00<00:00, 8746.92it/s]Training SARSA: 100%|██████████| 1000/1000 [00:00<00:00, 8967.00it/s]
+
+────────────────────────────────────────
+RESULTS: large_grid
+────────────────────────────────────────
+  Convergence speed:      episode 50 (converged)
+  BFS optimal path:       14 steps
+  Avg eval steps:         15.6
+  Eval success rate:      100.00%
+  Policy optimality ratio: 0.8974
+  Q-table size:           524 entries
+  Final epsilon:          0.2000
+────────────────────────────────────────
+
+Plot saved: results/sarsa_large_grid_a0.2_g0.9_e0.2_s0.1_learning_curve.png
+
+=== [SARSA] sigma=0.25 alpha=0.05 eps=0.05 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+============================================================
+Grid: grid_configs/large_grid.npy | Start: (1, 12)
+α=0.05, γ=0.9, ε=0.05 (fixed), σ=0.25
+============================================================
+BFS optimal path from (1, 12): 14 steps
+Training SARSA:   0%|          | 0/1000 [00:00<?, ?it/s]Training SARSA:  35%|███▌      | 354/1000 [00:00<00:00, 3538.09it/s]Training SARSA: 100%|██████████| 1000/1000 [00:00<00:00, 6413.26it/s]
+
+────────────────────────────────────────
+RESULTS: large_grid
+────────────────────────────────────────
+  Convergence speed:      episode 50 (converged)
+  BFS optimal path:       14 steps
+  Avg eval steps:         18.5
+  Eval success rate:      100.00%
+  Policy optimality ratio: 0.7568
+  Q-table size:           524 entries
+  Final epsilon:          0.0500
+────────────────────────────────────────
+
+Plot saved: results/sarsa_large_grid_a0.05_g0.9_e0.05_s0.25_learning_curve.png
+
+=== [SARSA] sigma=0.25 alpha=0.05 eps=0.2 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+============================================================
+Grid: grid_configs/large_grid.npy | Start: (1, 12)
+α=0.05, γ=0.9, ε=0.2 (fixed), σ=0.25
+============================================================
+BFS optimal path from (1, 12): 14 steps
+Training SARSA:   0%|          | 0/1000 [00:00<?, ?it/s]Training SARSA:  20%|██        | 201/1000 [00:00<00:00, 2009.78it/s]Training SARSA: 100%|██████████| 1000/1000 [00:00<00:00, 5516.00it/s]
+
+────────────────────────────────────────
+RESULTS: large_grid
+────────────────────────────────────────
+  Convergence speed:      episode 50 (converged)
+  BFS optimal path:       14 steps
+  Avg eval steps:         19.8
+  Eval success rate:      100.00%
+  Policy optimality ratio: 0.7071
+  Q-table size:           524 entries
+  Final epsilon:          0.2000
+────────────────────────────────────────
+
+Plot saved: results/sarsa_large_grid_a0.05_g0.9_e0.2_s0.25_learning_curve.png
+
+=== [SARSA] sigma=0.25 alpha=0.2 eps=0.05 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+============================================================
+Grid: grid_configs/large_grid.npy | Start: (1, 12)
+α=0.2, γ=0.9, ε=0.05 (fixed), σ=0.25
+============================================================
+BFS optimal path from (1, 12): 14 steps
+Training SARSA:   0%|          | 0/1000 [00:00<?, ?it/s]Training SARSA:  82%|████████▏ | 822/1000 [00:00<00:00, 8216.72it/s]Training SARSA: 100%|██████████| 1000/1000 [00:00<00:00, 8527.47it/s]
+
+────────────────────────────────────────
+RESULTS: large_grid
+────────────────────────────────────────
+  Convergence speed:      episode 50 (converged)
+  BFS optimal path:       14 steps
+  Avg eval steps:         20.3
+  Eval success rate:      100.00%
+  Policy optimality ratio: 0.6897
+  Q-table size:           524 entries
+  Final epsilon:          0.0500
+────────────────────────────────────────
+
+Plot saved: results/sarsa_large_grid_a0.2_g0.9_e0.05_s0.25_learning_curve.png
+
+=== [SARSA] sigma=0.25 alpha=0.2 eps=0.2 ===
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+============================================================
+Grid: grid_configs/large_grid.npy | Start: (1, 12)
+α=0.2, γ=0.9, ε=0.2 (fixed), σ=0.25
+============================================================
+BFS optimal path from (1, 12): 14 steps
+Training SARSA:   0%|          | 0/1000 [00:00<?, ?it/s]Training SARSA:  72%|███████▏  | 721/1000 [00:00<00:00, 7208.98it/s]Training SARSA: 100%|██████████| 1000/1000 [00:00<00:00, 7813.78it/s]
+
+────────────────────────────────────────
+RESULTS: large_grid
+────────────────────────────────────────
+  Convergence speed:      episode 50 (converged)
+  BFS optimal path:       14 steps
+  Avg eval steps:         18.2
+  Eval success rate:      100.00%
+  Policy optimality ratio: 0.7692
+  Q-table size:           524 entries
+  Final epsilon:          0.2000
+────────────────────────────────────────
+
+Plot saved: results/sarsa_large_grid_a0.2_g0.9_e0.2_s0.25_learning_curve.png
