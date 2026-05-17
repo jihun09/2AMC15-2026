@@ -7,6 +7,7 @@ interaction begins.
 import numpy as np
 from agents import BaseAgent
 from world.helpers import ACTIONS_TO_DIRECTIONS
+from utils import compute_bfs_distances, shaped_reward
 
 
 class ValueIterationAgent(BaseAgent):
@@ -19,6 +20,7 @@ class ValueIterationAgent(BaseAgent):
         gamma: float = 0.9,
         theta: float = 1e-6,
         max_iterations: int = 20000,
+        shaping_weight: float = 0.0,
     ):
         """
         Args:
@@ -28,10 +30,14 @@ class ValueIterationAgent(BaseAgent):
             gamma:          Discount factor.
             theta:          Convergence threshold for value updates.
             max_iterations: Hard cap on Bellman sweeps.
+            shaping_weight: Scaling factor for BFS potential-based reward shaping.
+                            Set to 0.0 (default) to disable shaping entirely.
         """
         super().__init__()
         self.policy: dict[tuple[int, int], int] = {}
         self.V: dict[tuple[int, int], float] = {}
+        self._dist = compute_bfs_distances(grid) if shaping_weight > 0.0 else None
+        self._shaping_weight = shaping_weight
         self._train(grid, sigma, gamma, theta, max_iterations)
 
     # ------------------------------------------------------------------
@@ -61,6 +67,8 @@ class ValueIterationAgent(BaseAgent):
 
         The environment picks the intended action with probability (1-sigma)
         and a uniformly random action with probability sigma.
+        When shaping_weight > 0, potential-based BFS shaping is applied
+        inside the Bellman update.
         """
         n_actions = 4
         outcomes: list[tuple[float, tuple[int, int], float, bool]] = []
@@ -70,16 +78,26 @@ class ValueIterationAgent(BaseAgent):
             dr, dc = ACTIONS_TO_DIRECTIONS[actual]
             new_pos = (state[0] + dr, state[1] + dc)
             cell = grid[new_pos]
-            reward = self._get_reward(grid, new_pos)
+            base_reward = self._get_reward(grid, new_pos)
 
             if cell == 0:
-                outcomes.append((prob, new_pos, reward, False))
+                true_next, done = new_pos, False
             elif cell in (1, 2):
-                outcomes.append((prob, state, reward, False))
+                true_next, done = state, False
             elif cell == 3:
-                outcomes.append((prob, new_pos, reward, True))
+                true_next, done = new_pos, True
             else:
-                outcomes.append((prob, state, reward, False))
+                true_next, done = state, False
+
+            if self._shaping_weight > 0.0 and self._dist is not None:
+                reward = shaped_reward(
+                    base_reward, state, true_next, done,
+                    self._dist, self._shaping_weight,
+                )
+            else:
+                reward = base_reward
+
+            outcomes.append((prob, true_next, reward, done))
 
         return outcomes
 
