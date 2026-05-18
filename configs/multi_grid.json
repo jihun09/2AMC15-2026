@@ -1,6 +1,0 @@
-[
-  {"label": "g=.95 e=.05 1k",          "alpha": 0.1, "gamma": 0.95, "epsilon": 0.05,                                                "sigma_train": 0.1, "episodes": 1000},
-  {"label": "g=.99 e=.05 1k",          "alpha": 0.1, "gamma": 0.99, "epsilon": 0.05,                                                "sigma_train": 0.1, "episodes": 1000},
-  {"label": "g=.99 decay .3->.05 2k",  "alpha": 0.1, "gamma": 0.99, "epsilon": 0.30, "epsilon_end": 0.05, "epsilon_decay_episodes": 1400, "sigma_train": 0.1, "episodes": 2000},
-  {"label": "g=.99 opt-init decay 2k", "alpha": 0.1, "gamma": 0.99, "epsilon": 0.30, "epsilon_end": 0.01, "epsilon_decay_episodes": 1400, "sigma_train": 0.1, "episodes": 2000, "q_init": 5.0}
-]
