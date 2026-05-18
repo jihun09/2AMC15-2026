@@ -1,13 +1,16 @@
 #!/bin/bash
 
-"""
+: '
 # Experiment 2.4 — Stochasticity Resilience in Large Environment
-# Grid: large_grid.npy | Sigma: 0.1, 0.25 | Default reward (no shaping)
+# Grid: large_grid.npy | Sigma: 0.1, 0.4 | Default reward (no shaping)
+#
+# Training-episode count fixed at 2000 (patience-100 early stopping).
+# T_max = max steps per episode (--iter flag), swept in {250, 750}.
 #
 # VI:   sigma (0.1, 0.4) x gamma (0.6, 0.9)
-# MC:   sigma (0.1, 0.4) x delta (0.6, 0.9) x max_ep (250, 750) x epsilon (0.1, 0.3) 
-# SARSA: sigma (0.1, 0.4) x gamma (0.6, 0.9) x alpha (0.1, 0.3) x epsilon (0.1, 0.3) x max_ep (250, 750)    
-"""
+# MC:   sigma (0.1, 0.4) x delta (0.6, 0.9) x T_max (250, 750) x epsilon (0.1, 0.3)
+# SARSA: sigma (0.1, 0.4) x gamma (0.6, 0.9) x alpha (0.1, 0.3) x epsilon (0.1, 0.3) x T_max (250, 750)
+'
 
 set -e
 
@@ -64,11 +67,11 @@ echo ">>> MC runs"
 for SIGMA in 0.1 0.4; do
     for DELTA in 0.6 0.9; do
         for EPS in 0.1 0.3; do
-            for EPISODES in 250 750; do
-                run_mc "sigma=$SIGMA delta=$DELTA eps=$EPS episodes=$EPISODES" \
+            for TMAX in 250 750; do
+                run_mc "sigma=$SIGMA delta=$DELTA eps=$EPS T_max=$TMAX" \
                     "$GRID" --no_gui --start_pos "$START_POS" \
                     --sigma "$SIGMA" --delta "$DELTA" \
-                    --iter 2000 --episodes "$EPISODES" \
+                    --iter "$TMAX" --episodes 2000 \
                     --epsilon "$EPS" --epsilon_decay 1 --epsilon_min 0.0 \
                     --shaping_weight 0 \
                     --random_seed "$SEED"
@@ -86,12 +89,12 @@ for SIGMA in 0.1 0.4; do
     for GAMMA in 0.6 0.9; do
         for ALPHA in 0.1 0.3; do
             for EPS in 0.1 0.3; do
-                for EPISODES in 250 750; do
-                    run_sarsa "sigma=$SIGMA gamma=$GAMMA alpha=$ALPHA eps=$EPS episodes=$EPISODES" \
+                for TMAX in 250 750; do
+                    run_sarsa "sigma=$SIGMA gamma=$GAMMA alpha=$ALPHA eps=$EPS T_max=$TMAX" \
                         "$GRID" --no_gui --start_pos "$START_POS" \
                         --sigma "$SIGMA" --gamma "$GAMMA" \
                         --alpha "$ALPHA" --epsilon "$EPS" --epsilon_decay 1.0 \
-                        --episodes "$EPISODES" --iter 2000 \
+                        --episodes 2000 --iter "$TMAX" \
                         --shaping_weight 0 \
                         --random_seed "$SEED"
                 done
