@@ -11,14 +11,14 @@
 set -e
 
 GRID="grid_configs/large_grid.npy"
-START_POS="1,12"
+START_POS="1,1"
 SEED=27
 RESULTS_FILE="results/exp24_results.txt"
 mkdir -p results
 
 echo "================================================================" > "$RESULTS_FILE"
 echo "Experiment 2.4 — Large Grid Stochasticity Resilience — $(date)" >> "$RESULTS_FILE"
-echo "Grid: $GRID | Sigmas: 0.1, 0.25" >> "$RESULTS_FILE"
+echo "Grid: $GRID | Sigmas: 0.1, 0.4" >> "$RESULTS_FILE"
 echo "================================================================" >> "$RESULTS_FILE"
 
 run_vi() {
@@ -39,7 +39,7 @@ run_sarsa() {
     local label="$1"; shift
     echo "" >> "$RESULTS_FILE"
     echo "=== [SARSA] $label ===" >> "$RESULTS_FILE"
-    python3 train_sarsa.py "$@" 2>&1 | tee -a "$RESULTS_FILE"
+    python3 sarsa.py "$@" 2>&1 | tee -a "$RESULTS_FILE"
 }
 
 # =============================================================================
@@ -47,10 +47,13 @@ run_sarsa() {
 # =============================================================================
 echo ">>> VI runs"
 
-for SIGMA in 0.1 0.25; do
-    run_vi "sigma=$SIGMA gamma=0.9" \
-        "$GRID" --no_gui --start_pos "$START_POS" --iter 2000 \
-        --sigma "$SIGMA" --gamma 0.9 --random_seed "$SEED"
+for SIGMA in 0.1 0.4; do
+    for GAMMA in 0.6 0.9; do
+        run_vi "sigma=$SIGMA gamma=$GAMMA" \
+            "$GRID" --no_gui --start_pos "$START_POS" --iter 2000 \
+            --sigma "$SIGMA" --gamma "$GAMMA" --random_seed "$SEED" \
+            --shaping_weight 0
+    done
 done
 
 # =============================================================================
@@ -58,16 +61,18 @@ done
 # =============================================================================
 echo ">>> MC runs"
 
-for SIGMA in 0.1 0.25; do
-    for ITER in 500 2000; do
-        for EPS in 0.05 0.2; do
-            run_mc "sigma=$SIGMA iter=$ITER eps=$EPS" \
-                "$GRID" --no_gui --start_pos "$START_POS" \
-                --sigma "$SIGMA" --delta 0.9 \
-                --iter "$ITER" --episodes 1000 \
-                --epsilon "$EPS" --epsilon_decay 0.999 --epsilon_min 0.0 \
-                --shaping_weight 0.0 \
-                --random_seed "$SEED"
+for SIGMA in 0.1 0.4; do
+    for DELTA in 0.6 0.9; do
+        for EPS in 0.1 0.3; do
+            for EPISODES in 250 750; do
+                run_mc "sigma=$SIGMA delta=$DELTA eps=$EPS episodes=$EPISODES" \
+                    "$GRID" --no_gui --start_pos "$START_POS" \
+                    --sigma "$SIGMA" --delta "$DELTA" \
+                    --iter 2000 --episodes "$EPISODES" \
+                    --epsilon "$EPS" --epsilon_decay 1 --epsilon_min 0.0 \
+                    --shaping_weight 0 \
+                    --random_seed "$SEED"
+            done
         done
     done
 done
@@ -77,17 +82,20 @@ done
 # =============================================================================
 echo ">>> SARSA runs"
 
-for SIGMA in 0.1 0.25; do
-    for ALPHA in 0.05 0.2; do
-        for EPS in 0.05 0.2; do
-            run_sarsa "sigma=$SIGMA alpha=$ALPHA eps=$EPS" \
-                "$GRID" --no_gui --start_pos "$START_POS" \
-                --sigma "$SIGMA" --gamma 0.9 \
-                --alpha "$ALPHA" --epsilon "$EPS" \
-                --epsilon_decay_mode fixed --shaping_weight 0.0 \
-                --episodes 1000 --max_steps 2000 \
-                --eval_steps 1000 --eval_episodes 10 \
-                --random_seed "$SEED"
+for SIGMA in 0.1 0.4; do
+    for GAMMA in 0.6 0.9; do
+        for ALPHA in 0.1 0.3; do
+            for EPS in 0.1 0.3; do
+                for EPISODES in 250 750; do
+                    run_sarsa "sigma=$SIGMA gamma=$GAMMA alpha=$ALPHA eps=$EPS episodes=$EPISODES" \
+                        "$GRID" --no_gui --start_pos "$START_POS" \
+                        --sigma "$SIGMA" --gamma "$GAMMA" \
+                        --alpha "$ALPHA" --epsilon "$EPS" --epsilon_decay 1.0 \
+                        --episodes "$EPISODES" --iter 2000 \
+                        --shaping_weight 0 \
+                        --random_seed "$SEED"
+                done
+            done
         done
     done
 done

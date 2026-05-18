@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 from world import Environment
 from world.grid import Grid
-from agents.sarsa_agent import SarsaAgent
+from agents.sarsa_agent import SARSAAgent
 from agents.random_agent import RandomAgent
 from utils import reward_fn, compute_bfs_distances, shaped_reward
 
@@ -53,7 +53,7 @@ def detect_convergence(episode_successes: list[int], window: int = 50,
 # Greedy evaluation for policy optimality ratio
 # =============================================================================
 
-def evaluate_greedy(env: Environment, agent: SarsaAgent, start_pos: tuple[int, int],
+def evaluate_greedy(env: Environment, agent: SARSAAgent, start_pos: tuple[int, int],
                     bfs_dist: np.ndarray, max_steps: int = 500,
                     n_eval_episodes: int = 10) -> dict:
     """Evaluate the trained agent greedily and compute policy optimality ratio.
@@ -167,7 +167,7 @@ def parse_args():
     return p.parse_args()
 
 
-def train_sarsa(env: Environment, agent: SarsaAgent, episodes: int,
+def train_sarsa(env: Environment, agent: SARSAAgent, episodes: int,
                 max_steps: int, start_pos: tuple[int, int] | None,
                 bfs_dist: np.ndarray | None = None,
                 shaping_weight: float = 3.0) -> tuple:
@@ -326,7 +326,7 @@ def main():
         print(f"BFS optimal path from {start_pos}: {optimal_path_length} steps")
 
         # Agent
-        sarsa_agent = SarsaAgent(
+        sarsa_agent = SARSAAgent(
             alpha=args.alpha,
             gamma=args.gamma,
             epsilon=args.epsilon,
