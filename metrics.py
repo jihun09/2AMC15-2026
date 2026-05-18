@@ -4,9 +4,7 @@ from pathlib import Path
 from agents import BaseAgent
 from world import Environment
 
-# =============================================================================
 # Metric 1 — Cumulative reward (tracked in training loop, plotted here)
-# =============================================================================
 
 def plot_learning_curve(
     episode_rewards: list[float],
@@ -76,9 +74,7 @@ def plot_learning_curve(
     print(f"Learning curve saved: {save_path}")
 
 
-# =============================================================================
 # Metric 2 — Policy optimality ratio
-# =============================================================================
 
 def compute_optimality_ratio(
     env: Environment,
@@ -152,9 +148,7 @@ def compute_optimality_ratio(
     }
 
 
-# =============================================================================
 # Metric 3 — Unique states visited
-# =============================================================================
 
 def extract_visited_states(agent) -> tuple[set, int]:
     """Extract visited states and total reachable states from a trained agent.
@@ -186,9 +180,7 @@ def extract_visited_states(agent) -> tuple[set, int]:
     return set(), 0
 
 
-# =============================================================================
 # Summary printer
-# =============================================================================
 
 def print_metrics_summary(
     algorithm: str,

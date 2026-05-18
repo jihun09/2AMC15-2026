@@ -131,7 +131,7 @@ class McOnPolicyAgent(BaseAgent):
         self.state_action_indexer = state_action_indexer
 
 
-        ####### creating returns ######
+        # creating returns
         returns = {}
 
         for row in range(len(state_action_space)):

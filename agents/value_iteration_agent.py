@@ -1,6 +1,6 @@
 """Value Iteration Agent.
 
-Implements Value Iteration (Dynamic Programming). The optimal value function
+Implements Value Iteration. The optimal value function
 and policy are computed entirely offline from the grid before any environment
 interaction begins.
 """
@@ -40,9 +40,8 @@ class ValueIterationAgent(BaseAgent):
         self._shaping_weight = shaping_weight
         self._train(grid, sigma, gamma, theta, max_iterations)
 
-    # ------------------------------------------------------------------
+
     # Internal helpers
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _get_reward(grid: np.ndarray, new_pos: tuple[int, int]) -> float:
@@ -115,9 +114,9 @@ class ValueIterationAgent(BaseAgent):
             for prob, ns, reward, done in self._transitions(grid, state, action, sigma)
         )
 
-    # ------------------------------------------------------------------
+
+
     # Offline planning
-    # ------------------------------------------------------------------
 
     def _train(
         self,
@@ -164,9 +163,8 @@ class ValueIterationAgent(BaseAgent):
 
         self.V = V
 
-    # ------------------------------------------------------------------
+
     # BaseAgent interface
-    # ------------------------------------------------------------------
 
     def take_action(self, state: tuple[int, int]) -> int:
         """Return the greedy action for the given state."""

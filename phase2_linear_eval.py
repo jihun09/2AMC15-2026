@@ -7,8 +7,6 @@ Runs two experiments:
 Writes a single tidy CSV to results/. Standalone because eval-configs
 doesn't currently expose a "train on grid X, eval on grids {Y, Z, ...}"
 shape — easier to do this once than generalize the CLI.
-
-Run: python phase2_linear_eval.py
 """
 from __future__ import annotations
 import argparse
@@ -118,7 +116,7 @@ def main():
     rows = []
     t0 = time.time()
 
-    print("=== A: Same-grid (train = eval) ===")
+    print("--- A: Same-grid (train = eval) ---")
     print(f"{'grid':<14} | {'steps':>10} | {'std':>6} | {'reward':>8} | {'success':>7}")
     for g in GRIDS:
         trials = [train_then_eval(g, g, s, episodes=args.episodes,
@@ -137,7 +135,7 @@ def main():
             })
 
     print()
-    print(f"=== B: Transfer (train={args.transfer_train_grid}, eval = each grid) ===")
+    print(f"--- B: Transfer (train={args.transfer_train_grid}, eval = each grid) ---")
     print(f"{'eval_grid':<14} | {'steps':>10} | {'std':>6} | {'reward':>8} | {'success':>7}")
     for g in GRIDS:
         trials = [train_then_eval(args.transfer_train_grid, g, s,

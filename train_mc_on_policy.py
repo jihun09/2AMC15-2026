@@ -114,7 +114,9 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
                 action = agent.take_action(state)
                 new_state, reward, terminated, info = env.step(action)
                 actual_action = info['actual_action']
-                # reward = shaped_reward(reward, state, new_state, terminated, dist, shaping_weight) Uncoment it to add reward shaping
+
+                # Uncomment it to add reward shaping
+                # reward = shaped_reward(reward, state, new_state, terminated, dist, shaping_weight)    
 
                 key = (state_idx, actual_action)
 

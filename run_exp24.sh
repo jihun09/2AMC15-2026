@@ -1,12 +1,13 @@
 #!/bin/bash
-# =============================================================================
+
+"""
 # Experiment 2.4 — Stochasticity Resilience in Large Environment
 # Grid: large_grid.npy | Sigma: 0.1, 0.25 | Default reward (no shaping)
 #
-# VI:   sigma x gamma=0.9
-# MC:   sigma x max_ep_len (500, 2000) x epsilon (0.05, 0.2) | delta=0.9
-# SARSA: sigma x alpha (0.05, 0.2) x epsilon (0.05, 0.2)     | gamma=0.9
-# =============================================================================
+# VI:   sigma (0.1, 0.4) x gamma (0.6, 0.9)
+# MC:   sigma (0.1, 0.4) x delta (0.6, 0.9) x max_ep (250, 750) x epsilon (0.1, 0.3) 
+# SARSA: sigma (0.1, 0.4) x gamma (0.6, 0.9) x alpha (0.1, 0.3) x epsilon (0.1, 0.3) x max_ep (250, 750)    
+"""
 
 set -e
 
@@ -16,35 +17,34 @@ SEED=27
 RESULTS_FILE="results/exp24_results.txt"
 mkdir -p results
 
-echo "================================================================" > "$RESULTS_FILE"
+echo "----------------------------------------------------------------" > "$RESULTS_FILE"
 echo "Experiment 2.4 — Large Grid Stochasticity Resilience — $(date)" >> "$RESULTS_FILE"
 echo "Grid: $GRID | Sigmas: 0.1, 0.4" >> "$RESULTS_FILE"
-echo "================================================================" >> "$RESULTS_FILE"
+echo "----------------------------------------------------------------" >> "$RESULTS_FILE"
 
 run_vi() {
     local label="$1"; shift
     echo "" >> "$RESULTS_FILE"
-    echo "=== [VI] $label ===" >> "$RESULTS_FILE"
+    echo "--- [VI] $label ---" >> "$RESULTS_FILE"
     python3 train_VI.py "$@" 2>&1 | tee -a "$RESULTS_FILE"
 }
 
 run_mc() {
     local label="$1"; shift
     echo "" >> "$RESULTS_FILE"
-    echo "=== [MC] $label ===" >> "$RESULTS_FILE"
+    echo "--- [MC] $label ---" >> "$RESULTS_FILE"
     python3 train_mc_on_policy.py "$@" 2>&1 | tee -a "$RESULTS_FILE"
 }
 
 run_sarsa() {
     local label="$1"; shift
     echo "" >> "$RESULTS_FILE"
-    echo "=== [SARSA] $label ===" >> "$RESULTS_FILE"
+    echo "--- [SARSA] $label ---" >> "$RESULTS_FILE"
     python3 sarsa.py "$@" 2>&1 | tee -a "$RESULTS_FILE"
 }
 
-# =============================================================================
 # VALUE ITERATION
-# =============================================================================
+
 echo ">>> VI runs"
 
 for SIGMA in 0.1 0.4; do
@@ -56,9 +56,9 @@ for SIGMA in 0.1 0.4; do
     done
 done
 
-# =============================================================================
+
 # MONTE CARLO
-# =============================================================================
+
 echo ">>> MC runs"
 
 for SIGMA in 0.1 0.4; do
@@ -77,9 +77,9 @@ for SIGMA in 0.1 0.4; do
     done
 done
 
-# =============================================================================
+
 # SARSA
-# =============================================================================
+
 echo ">>> SARSA runs"
 
 for SIGMA in 0.1 0.4; do
@@ -101,5 +101,5 @@ for SIGMA in 0.1 0.4; do
 done
 
 echo ""
-echo "========== EXPERIMENT 2.4 COMPLETE =========="
+echo "--- EXPERIMENT 2.4 COMPLETE ---"
 echo "Results: $RESULTS_FILE"

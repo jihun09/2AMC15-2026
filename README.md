@@ -4,46 +4,84 @@ This is the repository containing the challenge environment code.
 
 ## Quickstart
 
-1. Create a virtual environment for this course with Python >= 3.10. Using conda, you can do: `conda create -n dic2025 python=3.11`. Use `conda activate dic2025` to activate it `conda deactivate` to deactivate it.
-2. Clone this repository into the local directory you prefer `git clone https://github.com/RL-In-Practice/2AMC15-2026.git`.
-3. Install the required packages `pip install -r requirements.txt`. Now, you are ready to use the simulation environment! :partying_face:	
-4. Run `$ python train.py grid_configs/example_grid.npy` to start training!
+1. Create a virtual environment for this course with Python >= 3.10. Using conda, you can do: `conda create -n dic2025 python=3.11`. Use `conda activate dic2025` to activate it and `conda deactivate` to deactivate it.
+2. Clone this repository: `git clone https://github.com/RL-In-Practice/2AMC15-2026.git`.
+3. Install the required packages: `pip install -r requirements.txt`.
+4. Run training with your chosen agent:
 
-`train.py` is just an example training script. Inside this file, initialize the agent you want to train and evaluate. Feel free to modify it as necessary. Its usage is:
+```bash
+python train.py VI    grid_configs/A1_grid.npy --no_gui
+python train.py MC    grid_configs/A1_grid.npy --no_gui
+python train.py SARSA grid_configs/A1_grid.npy --no_gui
+```
+
+## `train.py` usage
+
+`train.py` is the unified training entry point. The first positional argument selects the agent (`VI`, `MC`, or `SARSA`); all remaining arguments are passed through to the corresponding trainer.
 
 ```bash
 usage: train.py [-h] [--no_gui] [--sigma SIGMA] [--fps FPS] [--iter ITER]
                 [--random_seed RANDOM_SEED] [--start_pos START_POS]
-                GRID [GRID ...]
+                [--gamma GAMMA] [--shaping_weight SHAPING_WEIGHT]
+                [--episodes EPISODES] [--epsilon EPSILON]
+                [--epsilon_decay EPSILON_DECAY] [--epsilon_min EPSILON_MIN]
+                [--patience PATIENCE] [--alpha ALPHA]
+                {VI,MC,SARSA} GRID [GRID ...]
+```
 
-DIC Reinforcement Learning Trainer.
+| Argument | Type | Default | Agents | Description |
+|---|---|---|---|---|
+| `agent` | `{VI,MC,SARSA}` | — | all | Which agent to train |
+| `GRID` | path | — | all | Path(s) to `.npy` grid file(s) |
+| `--no_gui` | flag | off | all | Disable rendering for faster training |
+| `--sigma` | float | 0.1 | all | Environment stochasticity (0 = deterministic) |
+| `--fps` | int | 30 | all | Render frame rate (ignored with `--no_gui`) |
+| `--iter` | int | 1000 | all | Max steps per episode |
+| `--random_seed` | int | 27 | all | Random seed |
+| `--start_pos` | str | None | all | Start position as `col,row` (e.g. `1,12`) |
+| `--gamma` | float | 0.9 | all | Discount factor |
+| `--shaping_weight` | float | 0.0 | all | BFS reward shaping scale (0 = disabled) |
+| `--episodes` | int | 1000 | MC, SARSA | Number of training episodes |
+| `--epsilon` | float | 0.1 | MC, SARSA | Initial exploration rate |
+| `--epsilon_decay` | float | 1.0 | MC, SARSA | Multiplicative epsilon decay per episode |
+| `--epsilon_min` | float | 0.0 | MC, SARSA | Minimum epsilon value |
+| `--patience` | int | 100 | MC, SARSA | Episodes of stable policy before early stopping |
+| `--alpha` | float | 0.1 | SARSA | Learning rate |
 
-positional arguments:
-  GRID                  Paths to the grid file to use. There can be more than
-                        one.
-options:
-  -h, --help                 show this help message and exit
-  --no_gui                   Disables rendering to train faster (boolean)
-  --sigma SIGMA              Sigma value for the stochasticity of the environment. (float, default=0.1, should be in [0, 1])
-  --fps FPS                  Frames per second to render at. Only used if no_gui is not set. (int, default=30)
-  --iter ITER                Number of iterations to go through. Should be integer. (int, default=1000)
-  --random_seed RANDOM_SEED  Random seed value for the environment. (int, default=0)
-  --start_pos START_POS      Agent start position as col,row (e.g. 2,3). If not set, the GUI lets you click to place it. In no_gui mode, defaults to random placement.
+### Examples
+
+```bash
+# Value Iteration with reward shaping
+python train.py VI grid_configs/A1_grid.npy --no_gui --gamma 0.95 --shaping_weight 1.0
+
+# Monte Carlo with epsilon decay
+python train.py MC grid_configs/A1_grid.npy --no_gui --episodes 2000 --epsilon 0.2 --epsilon_decay 0.995
+
+# SARSA with custom hyperparameters
+python train.py SARSA grid_configs/A1_grid.npy --no_gui --alpha 0.1 --gamma 0.95 --epsilon 0.05 --episodes 1000
 ```
 
 ## Code guide
 
-The code is made up of 2 modules: 
+The code is made up of 2 modules:
 
-1. `agent`
+1. `agents`
 2. `world`
 
-### The `agent` module
+### The `agents` module
 
-The `agent` module contains the `BaseAgent` class as well as some benchmark agents you may want to test against.
+The `agents` module contains the `BaseAgent` class and the implemented RL agents:
+
+| File | Agent |
+|---|---|
+| `value_iteration_agent.py` | Value Iteration (offline, model-based) |
+| `mc_on_policy_agent.py` | Monte Carlo on-policy (first-visit) |
+| `sarsa_agent.py` | SARSA (on-policy TD) |
+| `random_agent.py` | Random baseline |
+| `null_agent.py` | Null baseline (always action 0) |
 
 The `BaseAgent` is an abstract class and all RL agents for DIC must inherit from/implement it.
-If you know/understand class inheritence, skip the following section:
+If you know/understand class inheritance, skip the following section:
 
 #### `BaseAgent` as an abstract class
 Here you can find an explanation about abstract classes [Geeks for Geeks](https://www.geeksforgeeks.org/abstract-classes-in-python/).

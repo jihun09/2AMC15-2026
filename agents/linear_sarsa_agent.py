@@ -74,7 +74,8 @@ class LinearSARSAAgent(BaseAgent):
         self._h: int = 0
         self._w: int = 0
 
-    # ---- episode bookkeeping ----
+
+    # EPISODE BOOKKEEPING
 
     def start_episode(self) -> None:
         self._episode_count += 1
@@ -86,7 +87,8 @@ class LinearSARSAAgent(BaseAgent):
         frac = min(1.0, self._episode_count / self.epsilon_decay_episodes)
         return self.epsilon_start + (self.epsilon_end - self.epsilon_start) * frac
 
-    # ---- grid context: called by training loop right after env.reset() ----
+
+    # GRID CONTEXT: CALLED BY TRAINING LOOP RIGHT AFTER env.reset()
 
     def set_context(self, grid: np.ndarray) -> None:
         """Cache the grid and target position for this episode.
@@ -102,7 +104,8 @@ class LinearSARSAAgent(BaseAgent):
         else:
             self._target = None  # no target on this grid (terminal-reached)
 
-    # ---- feature extractor ----
+
+    # FEATURE EXTRACTOR
 
     def featurize(self, state: tuple[int, int]) -> np.ndarray:
         """Build the 10-d feature vector for the current (row, col)."""
@@ -135,7 +138,7 @@ class LinearSARSAAgent(BaseAgent):
         """Per-action Q-vector for `state`. Shape: (n_actions,)."""
         return self.W @ self.featurize(state)
 
-    # ---- policy + learning ----
+    # policy + learning
 
     def select_action(self, state, training: bool = True) -> int:
         if training and self._rng.random() < self.epsilon:
