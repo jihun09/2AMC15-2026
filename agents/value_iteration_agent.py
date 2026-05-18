@@ -53,7 +53,7 @@ class ValueIterationAgent(BaseAgent):
         elif cell in (1, 2):
             return -5.0
         elif cell == 3:
-            return 10.0
+            return 100.0
         return -5.0
 
     def _transitions(

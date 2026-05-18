@@ -32,7 +32,7 @@ def parse_args():
                         "no_gui is not set.")
     p.add_argument("--iter", type=int, default=1000,
                    help="Number of iterations to go through.")
-    p.add_argument("--random_seed", type=int, default=None,
+    p.add_argument("--random_seed", type=int, default=27,
                    help="Random seed value for the environment.")
     p.add_argument("--start_pos", type=str, default=None,
                    help="Agent start position as col,row (e.g. 2,3). "
@@ -44,7 +44,7 @@ def parse_args():
                    help="Discount factor of reward.")
     p.add_argument("--epsilon", type=float, default=0.1,
                    help="Determines how often the agent performs greedy actions.")
-    p.add_argument("--epsilon_decay", type=float, default=0.999,
+    p.add_argument("--epsilon_decay", type=float, default=1.0,
                    help="Multiplicative decay factor applied to epsilon after each episode.")
     p.add_argument("--epsilon_min", type=float, default=0.0,
                    help="Minimum value epsilon can decay to.")
