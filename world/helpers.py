@@ -4,10 +4,14 @@ from PIL import Image
 
 
 ACTIONS_TO_DIRECTIONS = {
-    0: (0, 1),   # Down
-    1: (0, -1),  # Up
-    2: (-1, 0),  # Left
-    3: (1, 0),   # Right
+    0: (0, 1),    # Down
+    1: (0, -1),   # Up
+    2: (-1, 0),   # Left
+    3: (1, 0),    # Right
+    4: (1, 1),    # Down-Right
+    5: (-1, 1),   # Down-Left
+    6: (1, -1),   # Up-Right
+    7: (-1, -1),  # Up-Left
 }
 
 def action_to_direction(action: int) -> tuple[int, int]:
