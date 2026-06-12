@@ -1,42 +1,44 @@
 import numpy as np
 from world.environment import Environment
 
+MODES = ("gps", "raycasting", "both")
+
 
 class ContinuousEnv:
     """Wrapper around Environment that converts the discrete (row, col)
-    state into a continuous sensor vector using raycasting.
-    
-    Each ray returns a normalized distance and a binary flag indicating
-    whether the cell hit was the target (1.0) or a wall/obstacle (0.0).
-    The state dimension is therefore 2 * 8 = 16.
+    state into a continuous observation vector.
+
+    Three modes are available:
+      - 'gps':        normalized (row, col) coordinates — state_dim = 2
+      - 'raycasting': 8-directional sensor (distance + target flag) — state_dim = 16
+      - 'both':       GPS + raycasting concatenated — state_dim = 18
 
     Args:
-        env: The base Environment to wrap.
-        max_range: Maximum number of cells a ray can travel. If None,
-            rays travel until they hit a non-empty cell (full raycasting).
-            If set to an integer, rays stop after that many cells even if
-            nothing was hit — simulates a sensor with limited range.
+        env:       The base Environment to wrap.
+        mode:      One of 'gps', 'raycasting', or 'both'.
+        max_range: Max ray length in cells. None = full raycasting.
     """
 
-    def __init__(self, env: Environment, max_range: int = None):
+    def __init__(self, env: Environment, mode: str = "gps", max_range: int = None):
+        assert mode in MODES, f"mode must be one of {MODES}"
         self.env = env
         self.n_actions = 8
-        self.max_range = max_range  # None = full raycasting, int = limited range
+        self.mode = mode
+        self.max_range = max_range
+        self.state_dim = {"gps": 2, "raycasting": 16, "both": 18}[mode]
 
-    def _get_sensor_vector(self, agent_pos, grid) -> np.ndarray:
-        """Cast rays in 8 directions, return normalized distances and target flags.
+    def _get_gps(self, agent_pos) -> np.ndarray:
+        """Normalized GPS coordinates (row/n_rows, col/n_cols). Shape (2,)."""
+        row, col = agent_pos
+        n_rows, n_cols = self.env.grid.shape
+        return np.array([row / n_rows, col / n_cols], dtype=np.float32)
+
+    def _get_raycasting(self, agent_pos, grid) -> np.ndarray:
+        """8-directional raycasting: (normalized_distance, target_flag) per direction.
         
-        For each direction, the sensor returns:
-          - Normalized distance to the nearest non-empty cell (float in (0, 1])
-          - Binary flag: 1.0 if the cell hit is the target, 0.0 if wall/obstacle
-
-        The sensor does NOT distinguish between walls and obstacles — both
-        return flag 0.0. Only the target returns flag 1.0. This avoids giving
-        the agent a direct distance-to-target signal, which would trivialise
-        the task and violate the assignment constraints.
-
-        If max_range is set, the ray stops after that many cells even if
-        nothing was hit, and the flag is 0.0 (no target seen in range).
+        The sensor does NOT distinguish walls from obstacles (both return flag 0.0).
+        Only the target returns flag 1.0. max_range limits the ray length if set.
+        Shape (16,).
         """
         directions = [
             (0, 1),   # Down
@@ -64,23 +66,31 @@ class ContinuousEnv:
                     hit_obstacle = True
                     break
                 if self.max_range is not None and dist >= self.max_range:
-                    break  # reached sensor range limit without hitting anything
+                    break  # reached sensor range limit
 
-            # Normalized distance
             norm_dist = dist / max_dist
-            # Binary target flag: 1.0 only if the ray actually hit the target
             is_target = 1.0 if (hit_obstacle and grid[x, y] == 3) else 0.0
-
             readings.append(norm_dist)
             readings.append(is_target)
 
-        return np.array(readings, dtype=np.float32)  # shape (16,)
+        return np.array(readings, dtype=np.float32)
+
+    def _get_obs(self, agent_pos) -> np.ndarray:
+        """Build the observation vector according to the current mode."""
+        if self.mode == "gps":
+            return self._get_gps(agent_pos)
+        elif self.mode == "raycasting":
+            return self._get_raycasting(agent_pos, self.env.grid)
+        else:  # both
+            gps = self._get_gps(agent_pos)
+            rays = self._get_raycasting(agent_pos, self.env.grid)
+            return np.concatenate([gps, rays])  # shape (18,)
 
     def reset(self, **kwargs) -> np.ndarray:
         pos = self.env.reset(**kwargs)
-        return self._get_sensor_vector(pos, self.env.grid)
+        return self._get_obs(pos)
 
     def step(self, action: int):
         pos, reward, done, info = self.env.step(action)
-        state = self._get_sensor_vector(pos, self.env.grid)
+        state = self._get_obs(pos)
         return state, reward, done, info
