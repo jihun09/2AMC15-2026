@@ -10,7 +10,7 @@ from world import Environment
 from world.grid import Grid
 from agents.value_iteration_agent import ValueIterationAgent
 
-from utils import compute_bfs_distances, reward_fn
+from utils import compute_bfs_distances
 from metrics import (compute_optimality_ratio, extract_visited_states,
                      print_metrics_summary)
 
@@ -56,8 +56,7 @@ def main(
         # Set up the environment
         env = Environment(grid, no_gui, sigma=sigma, target_fps=fps,
                           agent_start_pos=start_pos,
-                          random_seed=random_seed,
-                          reward_fn=reward_fn)
+                          random_seed=random_seed)
 
         # Initialize agent — VI plans offline from the grid before any interaction
         grid_array = Grid.load_grid(grid).cells
