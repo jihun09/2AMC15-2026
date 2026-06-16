@@ -244,7 +244,17 @@ class Environment:
         Args:
             new_pos: The new position of the agent.
         """
-
+        
+        # Block diagonal movement through two adjacent walls
+        dx = new_pos[0] - self.agent_pos[0]
+        dy = new_pos[1] - self.agent_pos[1]
+        if dx != 0 and dy != 0:
+            if self.grid[self.agent_pos[0] + dx, self.agent_pos[1]] in (1, 2) and \
+            self.grid[self.agent_pos[0], self.agent_pos[1] + dy] in (1, 2):
+                self.world_stats["total_failed_moves"] += 1
+                self.info["agent_moved"] = False
+                return
+            
         match self.grid[new_pos]:
             case 0:  # Moved to an empty tile
                 self.agent_pos = new_pos
@@ -311,7 +321,7 @@ class Environment:
         if val > self.sigma:
             actual_action = action
         else:
-            actual_action = random.randint(0, 3)
+            actual_action = random.randint(0, 7) # 8 possible actions, including diagonals
         
         # Make the move
         self.info["actual_action"] = actual_action
@@ -353,9 +363,9 @@ class Environment:
 
         match grid[agent_pos]:
             case 0:  # Moved to an empty tile
-                reward = -1
+                reward = -0.1
             case 1 | 2:  # Moved to a wall or obstacle
-                reward = -5
+                reward = -1
                 pass
             case 3:  # Moved to a target tile
                 reward = 10
