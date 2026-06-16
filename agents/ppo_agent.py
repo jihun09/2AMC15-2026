@@ -1,15 +1,15 @@
 """PPO Agent — Proximal Policy Optimization with Actor-Critic.
 
 Uses a clipped surrogate objective and Generalized Advantage Estimation (GAE)
-to stably update a neural policy on discrete grid-world actions.
+to stably update a neural policy on continuous observation vectors.
 
-State encoding: (row, col) is normalized to [0, 1] using the grid shape so
-the network receives a fixed-range 2-D input regardless of grid size.
+State input: a float32 numpy array produced by ContinuousEnv (GPS, raycasting,
+or both). The dimension is passed in as state_dim, matching DQN's interface.
 
-Update strategy: episodic — the rollout buffer is flushed and the policy
-updated at the end of every episode (or whenever the caller invokes learn()).
-If the episode was truncated (timeout), the last state value is bootstrapped
-from the critic rather than treated as a terminal.
+Update strategy: fixed-step rollout — the training script collects
+`rollout_steps` transitions (spanning multiple episodes) then calls learn().
+If the rollout ends mid-episode, the last state value is bootstrapped from
+the critic rather than treated as a terminal.
 """
 
 import numpy as np
@@ -50,22 +50,21 @@ class _ActorCritic(nn.Module):
 class PPOAgent(BaseAgent):
     def __init__(
         self,
-        n_actions: int = 4,
-        grid_shape: tuple[int, int] = (10, 10),
-        hidden_size: int = 64,
+        state_dim: int = 2,
+        n_actions: int = 8,
+        hidden_size: int = 128,
         lr: float = 3e-4,
         gamma: float = 0.99,
         clip_eps: float = 0.2,
         k_epochs: int = 4,
         gae_lambda: float = 0.95,
-        entropy_coef: float = 0.01,
+        entropy_coef: float = 0.05,
         value_coef: float = 0.5,
         max_grad_norm: float = 0.5,
         rng_seed: int | None = None,
     ):
         super().__init__()
         self.n_actions = n_actions
-        self.grid_shape = grid_shape
         self.gamma = gamma
         self.clip_eps = clip_eps
         self.k_epochs = k_epochs
@@ -78,31 +77,21 @@ class PPOAgent(BaseAgent):
             torch.manual_seed(rng_seed)
             np.random.seed(rng_seed)
 
-        # One-hot over every cell: gives each (row, col) a unique binary vector
-        # so the network can trivially distinguish all states (lookup-table regime).
-        state_dim = grid_shape[0] * grid_shape[1]
         self.policy = _ActorCritic(state_dim=state_dim, n_actions=n_actions,
                                    hidden_size=hidden_size)
         self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=lr)
-
-        self.visited_states: set = set()
         self._reset_buffer()
 
     # ------------------------------------------------------------------
     # State encoding
     # ------------------------------------------------------------------
 
-    def _encode(self, state: tuple[int, int]) -> torch.Tensor:
-        r, c = state
-        rows, cols = self.grid_shape
-        x = torch.zeros(rows * cols, dtype=torch.float32)
-        x[r * cols + c] = 1.0
-        return x
+    def _encode(self, state: np.ndarray) -> torch.Tensor:
+        return torch.tensor(state, dtype=torch.float32)
 
-    def state_value(self, state: tuple[int, int]) -> float:
-        x = self._encode(state)
+    def state_value(self, state: np.ndarray) -> float:
         with torch.no_grad():
-            _, v = self.policy(x)
+            _, v = self.policy(self._encode(state))
         return v.item()
 
     # ------------------------------------------------------------------
@@ -125,9 +114,8 @@ class PPOAgent(BaseAgent):
     # Action selection
     # ------------------------------------------------------------------
 
-    def select_action(self, state: tuple[int, int], training: bool = True) -> int:
+    def select_action(self, state: np.ndarray, training: bool = True) -> int:
         """Sample from the policy (training) or act greedily (evaluation)."""
-        self.visited_states.add(state)
         x = self._encode(state)
         with torch.no_grad():
             logits, value = self.policy(x)
@@ -142,8 +130,8 @@ class PPOAgent(BaseAgent):
             else:
                 return int(torch.argmax(logits).item())
 
-    def take_action(self, state: tuple[int, int]) -> int:
-        """Greedy action used by Environment.evaluate_agent."""
+    def take_action(self, state: np.ndarray) -> int:
+        """Greedy action for evaluation."""
         return self.select_action(state, training=False)
 
     def update(self, state, reward, action):
