@@ -1,13 +1,18 @@
-"""
-Train DQN agent on the continuous-state delivery robot task.
+"""Train PPO agent on the continuous-state delivery robot task.
+
+Mirrors train_dqn.py: uses ContinuousEnv for state observations, supports
+gps / raycasting / both state modes, and logs the same metrics.
 
 Usage:
-    python train_dqn.py --grid grid_configs/A1_grid.npy --episodes 1000 --no_gui --seed 42 --sigma 0.1
+    python3 train_ppo.py --grid grid_configs/A1_grid.npy --no_gui --episodes 2000
+    python3 train_ppo.py --grid grid_configs/A1_grid.npy --no_gui --state_mode raycasting
+    python3 train_ppo.py --grid grid_configs/A1_grid.npy --no_gui --state_mode both
 """
 
 import argparse
 import csv
 import random
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +21,8 @@ import torch
 from world.environment import Environment
 from world.continuous_env import ContinuousEnv
 from world.path_visualizer import visualize_path
-from agents.dqn import DQNAgent
+from agents.ppo_agent import PPOAgent
+from metrics import plot_learning_curve
 
 
 def custom_reward(grid, agent_pos):
@@ -32,10 +38,10 @@ def custom_reward(grid, agent_pos):
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Train DQN on the continuous delivery robot task.")
+    p = argparse.ArgumentParser(description="Train PPO on the continuous delivery robot task.")
     p.add_argument("--grid", type=Path, default=Path("grid_configs/A1_grid.npy"),
                    help="Path to the grid file.")
-    p.add_argument("--episodes", type=int, default=1000,
+    p.add_argument("--episodes", type=int, default=2000,
                    help="Number of training episodes.")
     p.add_argument("--max_steps", type=int, default=500,
                    help="Maximum environment steps per episode.")
@@ -44,35 +50,35 @@ def parse_args():
     p.add_argument("--seed", type=int, default=42,
                    help="Random seed for reproducibility.")
     p.add_argument("--sigma", type=float, default=0.1,
-                   help="Environment stochasticity (probability of random action).")
+                   help="Environment stochasticity.")
     p.add_argument("--max_range", type=int, default=None,
                    help="Maximum raycasting range in cells. None = full raycasting.")
     p.add_argument("--state_mode", choices=["gps", "raycasting", "both"], default="gps",
                    help="State representation: gps (2), raycasting (16), or both (18).")
     p.add_argument("--start_pos", type=str, default=None,
                    help="Fixed start 'row,col' (e.g. 1,12). Default: grid start cell or random.")
-    # DQN hyperparameters
-    p.add_argument("--lr", type=float, default=1e-3,
+    # PPO hyperparameters
+    p.add_argument("--lr", type=float, default=3e-4,
                    help="Adam learning rate.")
     p.add_argument("--gamma", type=float, default=0.99,
                    help="Discount factor.")
     p.add_argument("--hidden_size", type=int, default=128,
-                   help="Hidden layer width (two layers of this size).")
-    p.add_argument("--epsilon", type=float, default=1.0,
-                   help="Initial epsilon for epsilon-greedy exploration.")
-    p.add_argument("--epsilon_decay", type=float, default=0.995,
-                   help="Multiplicative epsilon decay applied after each episode.")
-    p.add_argument("--epsilon_min", type=float, default=0.05,
-                   help="Minimum epsilon value.")
-    p.add_argument("--buffer_capacity", type=int, default=50_000,
-                   help="Replay buffer capacity (number of transitions).")
-    p.add_argument("--batch_size", type=int, default=64,
-                   help="Mini-batch size for gradient updates.")
-    p.add_argument("--warmup", type=int, default=1_000,
-                   help="Minimum transitions in buffer before training starts.")
-    p.add_argument("--target_update_freq", type=int, default=100,
-                   help="Steps between hard target network updates.")
-    # Logging / checkpointing
+                   help="Hidden units per layer in actor/critic MLPs.")
+    p.add_argument("--clip_eps", type=float, default=0.2,
+                   help="PPO clipping epsilon.")
+    p.add_argument("--k_epochs", type=int, default=4,
+                   help="Gradient update epochs per rollout.")
+    p.add_argument("--gae_lambda", type=float, default=0.95,
+                   help="GAE lambda for advantage estimation.")
+    p.add_argument("--entropy_coef", type=float, default=0.05,
+                   help="Entropy bonus coefficient.")
+    p.add_argument("--value_coef", type=float, default=0.5,
+                   help="Critic loss coefficient.")
+    p.add_argument("--rollout_steps", type=int, default=2048,
+                   help="Steps to collect per PPO update (spans multiple episodes).")
+    p.add_argument("--minibatch_size", type=int, default=64,
+                   help="Minibatch size for PPO gradient updates.")
+    # Logging
     p.add_argument("--print_freq", type=int, default=10,
                    help="Print training stats every N episodes.")
     p.add_argument("--eval_freq", type=int, default=50,
@@ -88,12 +94,10 @@ def set_seeds(seed: int):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
 
 
 def evaluate_greedy(
-    agent: DQNAgent,
+    agent: PPOAgent,
     env: Environment,
     state_mode: str,
     max_range,
@@ -103,17 +107,16 @@ def evaluate_greedy(
     # Snapshot the global RNG so evaluation episodes don't perturb the training
     # RNG stream (the environment draws from random.* on every step).
     rng_state = random.getstate()
-    agent.training_mode = False
+    eval_env = ContinuousEnv(env, mode=state_mode, max_range=max_range)
     successes = 0
     rewards = []
     steps_list = []
 
-    eval_env = ContinuousEnv(env, mode=state_mode, max_range=max_range)
     for _ in range(n_episodes):
         state = eval_env.reset()
         ep_reward = 0.0
         for step in range(max_steps):
-            action = agent.take_action(state)
+            action = agent.select_action(state, training=False)
             state, reward, done, _ = eval_env.step(action)
             ep_reward += reward
             if done:
@@ -124,7 +127,6 @@ def evaluate_greedy(
             steps_list.append(max_steps)
         rewards.append(ep_reward)
 
-    agent.training_mode = True
     random.setstate(rng_state)
     return {
         "success_rate": successes / n_episodes,
@@ -136,7 +138,6 @@ def evaluate_greedy(
 def save_path_image(agent, base_env, state_mode, max_range, max_steps, save_path):
     """Run one greedy episode and save the agent's path on the grid as a PNG."""
     eval_env = ContinuousEnv(base_env, mode=state_mode, max_range=max_range)
-    agent.training_mode = False
     state = eval_env.reset()
     initial_grid = np.copy(base_env.grid)
     path = [base_env.agent_pos]
@@ -146,7 +147,6 @@ def save_path_image(agent, base_env, state_mode, max_range, max_steps, save_path
         path.append(base_env.agent_pos)
         if done:
             break
-    agent.training_mode = True
     visualize_path(initial_grid, path).save(str(save_path))
     print(f"Path visualization saved: {save_path}")
 
@@ -172,96 +172,122 @@ def main():
     )
     cont_env = ContinuousEnv(base_env, mode=args.state_mode, max_range=args.max_range)
 
-    agent = DQNAgent(
+    agent = PPOAgent(
         state_dim=cont_env.state_dim,
         n_actions=8,
         hidden_size=args.hidden_size,
         lr=args.lr,
         gamma=args.gamma,
-        epsilon=args.epsilon,
-        epsilon_decay=args.epsilon_decay,
-        epsilon_min=args.epsilon_min,
-        buffer_capacity=args.buffer_capacity,
-        batch_size=args.batch_size,
-        warmup=args.warmup,
-        target_update_freq=args.target_update_freq,
+        clip_eps=args.clip_eps,
+        k_epochs=args.k_epochs,
+        gae_lambda=args.gae_lambda,
+        entropy_coef=args.entropy_coef,
+        value_coef=args.value_coef,
+        minibatch_size=args.minibatch_size,
+        rng_seed=args.seed,
     )
 
     run_name = (
-        f"dqn_{args.grid.stem}_{args.state_mode}_seed{args.seed}_sigma{args.sigma}"
+        f"ppo_{args.grid.stem}_{args.state_mode}_seed{args.seed}_sigma{args.sigma}"
         f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}"
         f"_range{'full' if args.max_range is None else args.max_range}"
     )
     train_csv = results_dir / f"{run_name}_training.csv"
-    eval_csv = results_dir / f"{run_name}_eval.csv"
+    eval_csv  = results_dir / f"{run_name}_eval.csv"
 
     with open(train_csv, "w", newline="") as f:
-        csv.writer(f).writerow(["episode", "reward", "steps", "success", "epsilon"])
+        csv.writer(f).writerow(["episode", "reward", "steps", "success"])
     with open(eval_csv, "w", newline="") as f:
         csv.writer(f).writerow(["episode", "success_rate", "mean_reward", "mean_steps"])
 
-    print(f"DQN Training | grid={args.grid} | episodes={args.episodes} | seed={args.seed}")
+    print(f"PPO Training | grid={args.grid} | episodes={args.episodes} | seed={args.seed}")
     print(f"state_mode={args.state_mode} (dim={cont_env.state_dim}) | sigma={args.sigma} | max_range={'full' if args.max_range is None else args.max_range} | start={start_pos if start_pos else 'auto'}")
-    print(f"device={agent.device} | hidden={args.hidden_size} | lr={args.lr} | gamma={args.gamma}")
-    print(f"eps: {args.epsilon} -> {args.epsilon_min} (decay={args.epsilon_decay})")
-    print(f"buffer={args.buffer_capacity} | batch={args.batch_size} | warmup={args.warmup} | target_C={args.target_update_freq}")
+    print(f"hidden={args.hidden_size} | lr={args.lr} | gamma={args.gamma} | clip={args.clip_eps}")
+    print(f"rollout_steps={args.rollout_steps} | minibatch={args.minibatch_size} | k_epochs={args.k_epochs} | entropy={args.entropy_coef}")
     print("-" * 70)
 
-    episode_rewards = []
-    episode_successes = []
+    episode_rewards: list[float] = []
+    episode_successes: list[int] = []
     window = 50
 
-    for ep in range(1, args.episodes + 1):
-        state = cont_env.reset()
-        ep_reward = 0.0
-        success = False
+    # Rollout-based loop: collect rollout_steps transitions spanning many
+    # episodes before each PPO gradient update, matching standard PPO practice.
+    ep = 0
+    state = cont_env.reset()
+    ep_return = 0.0
+    ep_step = 0
+    terminated = False
 
-        for step in range(args.max_steps):
-            action = agent.take_action(state)
-            next_state, reward, done, _ = cont_env.step(action)
-            agent.store_transition(state, action, reward, next_state, done)
-            agent.train_step()
+    while ep < args.episodes:
+        steps_collected = 0
+        while steps_collected < args.rollout_steps and ep < args.episodes:
+            action = agent.select_action(state, training=True)
+            next_state, reward, terminated, _ = cont_env.step(action)
+
+            ep_step += 1
+            # A max_steps timeout is stored as terminal so GAE is cut at the
+            # episode boundary and advantages do not bleed across episodes.
+            done = terminated or ep_step >= args.max_steps
+            agent.store_reward(reward, done)
+            ep_return += reward
+            steps_collected += 1
             state = next_state
-            ep_reward += reward
+
             if done:
-                success = True
-                break
+                episode_rewards.append(ep_return)
+                episode_successes.append(int(terminated))
 
-        agent.decay_epsilon()
-        episode_rewards.append(ep_reward)
-        episode_successes.append(int(success))
+                with open(train_csv, "a", newline="") as f:
+                    csv.writer(f).writerow([ep + 1, ep_return, ep_step, int(terminated)])
 
-        with open(train_csv, "a", newline="") as f:
-            csv.writer(f).writerow([ep, ep_reward, step + 1, int(success), agent.epsilon])
+                if (ep + 1) % args.print_freq == 0:
+                    avg_r = np.mean(episode_rewards[-window:])
+                    sr = np.mean(episode_successes[-window:]) * 100
+                    print(
+                        f"Ep {ep + 1:5d}/{args.episodes} | "
+                        f"reward={ep_return:8.2f} | avg{window}={avg_r:8.2f} | "
+                        f"sr={sr:5.1f}%"
+                    )
 
-        if ep % args.print_freq == 0:
-            avg_r = np.mean(episode_rewards[-window:])
-            sr = np.mean(episode_successes[-window:]) * 100
-            print(
-                f"Ep {ep:5d}/{args.episodes} | "
-                f"reward={ep_reward:8.2f} | avg{window}={avg_r:8.2f} | "
-                f"sr={sr:5.1f}% | eps={agent.epsilon:.4f} | "
-                f"buf={len(agent.replay_buffer)}"
-            )
+                if (ep + 1) % args.eval_freq == 0:
+                    stats = evaluate_greedy(agent, base_env, args.state_mode,
+                                            args.max_range, args.eval_episodes,
+                                            args.max_steps)
+                    with open(eval_csv, "a", newline="") as f:
+                        csv.writer(f).writerow([ep + 1, stats["success_rate"],
+                                                stats["mean_reward"], stats["mean_steps"]])
+                    print(
+                        f"  [eval] success={stats['success_rate']*100:.1f}% | "
+                        f"mean_r={stats['mean_reward']:.2f} | "
+                        f"mean_steps={stats['mean_steps']:.1f}"
+                    )
 
-        if ep % args.eval_freq == 0:
-            stats = evaluate_greedy(agent, base_env, args.state_mode, args.max_range,
-                                    args.eval_episodes, args.max_steps)
-            with open(eval_csv, "a", newline="") as f:
-                csv.writer(f).writerow([ep, stats["success_rate"],
-                                        stats["mean_reward"], stats["mean_steps"]])
-            print(
-                f"  [eval] success={stats['success_rate']*100:.1f}% | "
-                f"mean_r={stats['mean_reward']:.2f} | mean_steps={stats['mean_steps']:.1f}"
-            )
+                if (ep + 1) % args.save_freq == 0:
+                    agent.save(str(checkpoints_dir / f"{run_name}_ep{ep + 1}.pt"))
 
-        if ep % args.save_freq == 0:
-            agent.save(str(checkpoints_dir / f"{run_name}_ep{ep}.pt"))
+                ep += 1
+                if ep < args.episodes:
+                    state = cont_env.reset()
+                    ep_return = 0.0
+                    ep_step = 0
+                    terminated = False
+
+        last_value = 0.0 if terminated else agent.state_value(state)
+        agent.learn(last_value=last_value)
 
     agent.save(str(checkpoints_dir / f"{run_name}_final.pt"))
-
     np.save(results_dir / f"{run_name}_rewards.npy", np.array(episode_rewards))
     np.save(results_dir / f"{run_name}_successes.npy", np.array(episode_successes))
+
+    plot_learning_curve(
+        episode_rewards, episode_successes,
+        title=(f"PPO | {args.grid.stem} | {args.state_mode} | "
+               f"lr={args.lr} gamma={args.gamma} sigma={args.sigma}"),
+        save_path=results_dir / (
+            f"ppo_{args.grid.stem}_{args.state_mode}_learning_curve_"
+            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        ),
+    )
 
     save_path_image(agent, base_env, args.state_mode, args.max_range,
                     args.max_steps, results_dir / f"{run_name}_path.png")
