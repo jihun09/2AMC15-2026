@@ -24,7 +24,7 @@ def custom_reward(grid, agent_pos):
         case 0:
             return -0.1
         case 1 | 2:
-            return -1.0
+            return -0.5
         case 3:
             return 10.0
         case _:
@@ -43,13 +43,13 @@ def parse_args():
                    help="Disable pygame rendering.")
     p.add_argument("--seed", type=int, default=42,
                    help="Random seed for reproducibility.")
-    p.add_argument("--sigma", type=float, default=0.1,
+    p.add_argument("--sigma", type=float, default=0,
                    help="Environment stochasticity (probability of random action).")
     p.add_argument("--max_range", type=int, default=None,
                    help="Maximum raycasting range in cells. None = full raycasting.")
     p.add_argument("--state_mode", choices=["gps", "raycasting", "both"], default="gps",
                    help="State representation: gps (2), raycasting (16), or both (18).")
-    p.add_argument("--start_pos", type=str, default=None,
+    p.add_argument("--start_pos", type=str, default="1,12",
                    help="Fixed start 'row,col' (e.g. 1,12). Default: grid start cell or random.")
     # DQN hyperparameters
     p.add_argument("--lr", type=float, default=1e-3,

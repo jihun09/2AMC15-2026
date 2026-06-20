@@ -365,7 +365,7 @@ class Environment:
             case 0:  # Moved to an empty tile
                 reward = -0.1
             case 1 | 2:  # Moved to a wall or obstacle
-                reward = -1
+                reward = -0.5
                 pass
             case 3:  # Moved to a target tile
                 reward = 10
