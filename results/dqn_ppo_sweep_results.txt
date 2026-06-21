@@ -1,0 +1,916 @@
+----------------------------------------------------------------
+DQN / PPO Sweep — A1_grid — Sun Jun 21 17:26:32 CEST 2026
+episodes=500 max_steps=500 state_mode=gps sigma=0 start_pos=1,12
+----------------------------------------------------------------
+
+--- [DQN] lr=0.0001 seed=0 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+DQN Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=0
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+device=cpu | hidden=256 | lr=0.0001 | gamma=0.99
+eps: 1.0 -> 0.1 (decay=0.995)
+buffer=50000 | batch=64 | warmup=1000 | target_C=100
+----------------------------------------------------------------------
+Ep    10/500 | reward= -105.80 | avg50= -127.78 | sr= 10.0% | eps=0.9511 | buf=4907
+Ep    20/500 | reward= -112.80 | avg50= -126.11 | sr=  5.0% | eps=0.9046 | buf=9907
+Ep    30/500 | reward= -130.00 | avg50= -122.03 | sr=  3.3% | eps=0.8604 | buf=14907
+Ep    40/500 | reward=  -99.60 | avg50= -118.57 | sr=  2.5% | eps=0.8183 | buf=19907
+Ep    50/500 | reward=  -98.00 | avg50= -115.15 | sr=  2.0% | eps=0.7783 | buf=24907
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep    60/500 | reward=  -92.00 | avg50= -109.13 | sr=  0.0% | eps=0.7403 | buf=29907
+Ep    70/500 | reward=  -96.80 | avg50= -102.82 | sr=  0.0% | eps=0.7041 | buf=34907
+Ep    80/500 | reward=  -86.80 | avg50=  -97.55 | sr=  0.0% | eps=0.6696 | buf=39907
+Ep    90/500 | reward=  -89.60 | avg50=  -93.30 | sr=  0.0% | eps=0.6369 | buf=44907
+Ep   100/500 | reward=  -88.00 | avg50=  -90.09 | sr=  0.0% | eps=0.6058 | buf=49907
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   110/500 | reward=  -88.00 | avg50=  -87.57 | sr=  0.0% | eps=0.5762 | buf=50000
+Ep   120/500 | reward=  -85.60 | avg50=  -85.37 | sr=  0.0% | eps=0.5480 | buf=50000
+Ep   130/500 | reward=  -79.60 | avg50=  -84.20 | sr=  0.0% | eps=0.5212 | buf=50000
+Ep   140/500 | reward=  -86.80 | avg50=  -83.06 | sr=  0.0% | eps=0.4957 | buf=50000
+Ep   150/500 | reward=  -74.40 | avg50=  -81.22 | sr=  0.0% | eps=0.4715 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   160/500 | reward=  -74.00 | avg50=  -79.19 | sr=  0.0% | eps=0.4484 | buf=50000
+Ep   170/500 | reward=  -73.60 | avg50=  -79.28 | sr=  0.0% | eps=0.4265 | buf=50000
+Ep   180/500 | reward=  -72.40 | avg50=  -78.28 | sr=  0.0% | eps=0.4057 | buf=50000
+Ep   190/500 | reward=  -72.00 | avg50=  -76.37 | sr=  0.0% | eps=0.3858 | buf=50000
+Ep   200/500 | reward=  -69.20 | avg50=  -75.63 | sr=  0.0% | eps=0.3670 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   210/500 | reward=  -71.60 | avg50=  -74.75 | sr=  0.0% | eps=0.3490 | buf=50000
+Ep   220/500 | reward=  -64.80 | avg50=  -71.75 | sr=  0.0% | eps=0.3320 | buf=50000
+Ep   230/500 | reward=  -64.80 | avg50=  -70.16 | sr=  0.0% | eps=0.3157 | buf=50000
+Ep   240/500 | reward=  -66.00 | avg50=  -69.32 | sr=  0.0% | eps=0.3003 | buf=50000
+Ep   250/500 | reward=  -63.20 | avg50=  -68.46 | sr=  0.0% | eps=0.2856 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   260/500 | reward=  -66.00 | avg50=  -67.51 | sr=  0.0% | eps=0.2716 | buf=50000
+Ep   270/500 | reward=  -63.20 | avg50=  -66.77 | sr=  0.0% | eps=0.2584 | buf=50000
+Ep   280/500 | reward=  -60.80 | avg50=  -65.75 | sr=  0.0% | eps=0.2457 | buf=50000
+Ep   290/500 | reward=  -62.00 | avg50=  -65.69 | sr=  2.0% | eps=0.2337 | buf=50000
+Ep   300/500 | reward=  -63.60 | avg50=  -64.60 | sr=  2.0% | eps=0.2223 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   310/500 | reward=  -62.00 | avg50=  -64.16 | sr=  2.0% | eps=0.2114 | buf=50000
+Ep   320/500 | reward=  -57.60 | avg50=  -63.75 | sr=  2.0% | eps=0.2011 | buf=50000
+Ep   330/500 | reward=  -64.00 | avg50=  -63.69 | sr=  2.0% | eps=0.1913 | buf=50000
+Ep   340/500 | reward=  -62.40 | avg50=  -62.46 | sr=  0.0% | eps=0.1819 | buf=50000
+Ep   350/500 | reward=  -58.00 | avg50=  -63.52 | sr=  0.0% | eps=0.1730 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   360/500 | reward=  -59.60 | avg50=  -63.65 | sr=  0.0% | eps=0.1646 | buf=50000
+Ep   370/500 | reward=  -58.80 | avg50=  -62.97 | sr=  0.0% | eps=0.1565 | buf=50000
+Ep   380/500 | reward=  -54.40 | avg50=  -61.84 | sr=  0.0% | eps=0.1489 | buf=50000
+Ep   390/500 | reward=  -59.60 | avg50=  -61.18 | sr=  0.0% | eps=0.1416 | buf=50000
+Ep   400/500 | reward=  -57.20 | avg50=  -59.36 | sr=  0.0% | eps=0.1347 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   410/500 | reward=  -52.80 | avg50=  -57.98 | sr=  0.0% | eps=0.1281 | buf=50000
+Ep   420/500 | reward=  -58.80 | avg50=  -57.70 | sr=  0.0% | eps=0.1218 | buf=50000
+Ep   430/500 | reward=  -56.40 | avg50=  -57.59 | sr=  0.0% | eps=0.1159 | buf=50000
+Ep   440/500 | reward=  -54.80 | avg50=  -57.65 | sr=  0.0% | eps=0.1102 | buf=50000
+Ep   450/500 | reward=  -56.00 | avg50=  -57.26 | sr=  0.0% | eps=0.1048 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   460/500 | reward=  -56.40 | avg50=  -57.43 | sr=  0.0% | eps=0.1000 | buf=50000
+Ep   470/500 | reward=  -56.80 | avg50=  -57.10 | sr=  0.0% | eps=0.1000 | buf=50000
+Ep   480/500 | reward=  -55.20 | avg50=  -56.87 | sr=  0.0% | eps=0.1000 | buf=50000
+Ep   490/500 | reward=  -56.00 | avg50=  -57.09 | sr=  0.0% | eps=0.1000 | buf=50000
+Ep   500/500 | reward=  -73.20 | avg50=  -59.84 | sr=  0.0% | eps=0.1000 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Path visualization saved: results/dqn_A1_grid_gps_seed0_sigma0.0_lr0.0001_g0.99_h256_rangefull_path.png
+
+Done. Results: results/dqn_A1_grid_gps_seed0_sigma0.0_lr0.0001_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/dqn_A1_grid_gps_seed0_sigma0.0_lr0.0001_g0.99_h256_rangefull_final.pt
+
+--- [DQN] lr=0.0001 seed=42 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+DQN Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=42
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+device=cpu | hidden=256 | lr=0.0001 | gamma=0.99
+eps: 1.0 -> 0.1 (decay=0.995)
+buffer=50000 | batch=64 | warmup=1000 | target_C=100
+----------------------------------------------------------------------
+Ep    10/500 | reward= -157.60 | avg50= -132.68 | sr=  0.0% | eps=0.9511 | buf=5000
+Ep    20/500 | reward= -114.80 | avg50= -126.76 | sr=  0.0% | eps=0.9046 | buf=10000
+Ep    30/500 | reward= -114.80 | avg50= -121.96 | sr=  0.0% | eps=0.8604 | buf=15000
+Ep    40/500 | reward= -114.40 | avg50= -117.76 | sr=  0.0% | eps=0.8183 | buf=20000
+Ep    50/500 | reward=  -98.00 | avg50= -113.32 | sr=  0.0% | eps=0.7783 | buf=25000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep    60/500 | reward=  -91.20 | avg50= -106.00 | sr=  0.0% | eps=0.7403 | buf=30000
+Ep    70/500 | reward=  -94.80 | avg50= -100.82 | sr=  0.0% | eps=0.7041 | buf=35000
+Ep    80/500 | reward=  -91.20 | avg50=  -96.85 | sr=  0.0% | eps=0.6696 | buf=40000
+Ep    90/500 | reward=  -93.60 | avg50=  -96.01 | sr=  0.0% | eps=0.6369 | buf=45000
+Ep   100/500 | reward=  -82.40 | avg50=  -94.47 | sr=  0.0% | eps=0.6058 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   110/500 | reward= -134.00 | avg50=  -93.38 | sr=  0.0% | eps=0.5762 | buf=50000
+Ep   120/500 | reward=  -76.40 | avg50=  -91.64 | sr=  0.0% | eps=0.5480 | buf=50000
+Ep   130/500 | reward=  -85.20 | avg50=  -90.94 | sr=  0.0% | eps=0.5212 | buf=50000
+Ep   140/500 | reward=  -83.20 | avg50=  -87.14 | sr=  0.0% | eps=0.4957 | buf=50000
+Ep   150/500 | reward=  -78.00 | avg50=  -85.13 | sr=  0.0% | eps=0.4715 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   160/500 | reward=  -86.40 | avg50=  -82.34 | sr=  0.0% | eps=0.4484 | buf=50000
+Ep   170/500 | reward=  -74.80 | avg50=  -79.90 | sr=  0.0% | eps=0.4265 | buf=50000
+Ep   180/500 | reward=  -76.80 | avg50=  -76.94 | sr=  0.0% | eps=0.4057 | buf=50000
+Ep   190/500 | reward=  -75.20 | avg50=  -75.42 | sr=  0.0% | eps=0.3858 | buf=50000
+Ep   200/500 | reward=  -70.40 | avg50=  -75.18 | sr=  0.0% | eps=0.3670 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   210/500 | reward=  -75.60 | avg50=  -74.81 | sr=  0.0% | eps=0.3490 | buf=50000
+Ep   220/500 | reward=  -72.00 | avg50=  -75.11 | sr=  0.0% | eps=0.3320 | buf=50000
+Ep   230/500 | reward= -149.60 | avg50=  -78.35 | sr=  0.0% | eps=0.3157 | buf=50000
+Ep   240/500 | reward=  -68.80 | avg50=  -77.21 | sr=  0.0% | eps=0.3003 | buf=50000
+Ep   250/500 | reward=  -68.40 | avg50=  -75.11 | sr=  0.0% | eps=0.2856 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   260/500 | reward=  -65.60 | avg50=  -73.49 | sr=  0.0% | eps=0.2716 | buf=50000
+Ep   270/500 | reward=  -70.80 | avg50=  -71.65 | sr=  0.0% | eps=0.2584 | buf=50000
+Ep   280/500 | reward=  -65.20 | avg50=  -66.72 | sr=  0.0% | eps=0.2457 | buf=50000
+Ep   290/500 | reward=  -66.80 | avg50=  -66.08 | sr=  0.0% | eps=0.2337 | buf=50000
+Ep   300/500 | reward=  -58.80 | avg50=  -65.77 | sr=  0.0% | eps=0.2223 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   310/500 | reward=  -53.20 | avg50=  -63.74 | sr=  0.0% | eps=0.2114 | buf=50000
+Ep   320/500 | reward=  -81.60 | avg50=  -62.04 | sr=  0.0% | eps=0.2011 | buf=50000
+Ep   330/500 | reward=  -59.20 | avg50=  -61.76 | sr=  0.0% | eps=0.1913 | buf=50000
+Ep   340/500 | reward=  -60.80 | avg50=  -61.16 | sr=  0.0% | eps=0.1819 | buf=50000
+Ep   350/500 | reward=  -58.40 | avg50=  -60.39 | sr=  0.0% | eps=0.1730 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   360/500 | reward=  -58.40 | avg50=  -61.08 | sr=  0.0% | eps=0.1646 | buf=50000
+Ep   370/500 | reward=  -56.80 | avg50=  -61.15 | sr=  0.0% | eps=0.1565 | buf=50000
+Ep   380/500 | reward=  -55.20 | avg50=  -59.53 | sr=  0.0% | eps=0.1489 | buf=50000
+Ep   390/500 | reward=  -56.40 | avg50=  -58.46 | sr=  0.0% | eps=0.1416 | buf=50000
+Ep   400/500 | reward=  -58.00 | avg50=  -58.42 | sr=  0.0% | eps=0.1347 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   410/500 | reward=  -59.60 | avg50=  -58.14 | sr=  0.0% | eps=0.1281 | buf=50000
+Ep   420/500 | reward=  -55.60 | avg50=  -57.99 | sr=  0.0% | eps=0.1218 | buf=50000
+Ep   430/500 | reward=  -65.20 | avg50=  -59.10 | sr=  0.0% | eps=0.1159 | buf=50000
+Ep   440/500 | reward=  -56.40 | avg50=  -58.92 | sr=  0.0% | eps=0.1102 | buf=50000
+Ep   450/500 | reward=  -57.20 | avg50=  -58.36 | sr=  0.0% | eps=0.1048 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   460/500 | reward=  -54.80 | avg50=  -58.26 | sr=  0.0% | eps=0.1000 | buf=50000
+Ep   470/500 | reward=  -54.00 | avg50=  -57.65 | sr=  0.0% | eps=0.1000 | buf=50000
+Ep   480/500 | reward=  -57.60 | avg50=  -56.37 | sr=  0.0% | eps=0.1000 | buf=50000
+Ep   490/500 | reward=  -54.40 | avg50=  -56.44 | sr=  0.0% | eps=0.1000 | buf=50000
+Ep   500/500 | reward=  -53.60 | avg50=  -56.08 | sr=  0.0% | eps=0.1000 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Path visualization saved: results/dqn_A1_grid_gps_seed42_sigma0.0_lr0.0001_g0.99_h256_rangefull_path.png
+
+Done. Results: results/dqn_A1_grid_gps_seed42_sigma0.0_lr0.0001_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/dqn_A1_grid_gps_seed42_sigma0.0_lr0.0001_g0.99_h256_rangefull_final.pt
+
+--- [DQN] lr=0.0005 seed=0 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+DQN Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=0
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+device=cpu | hidden=256 | lr=0.0005 | gamma=0.99
+eps: 1.0 -> 0.1 (decay=0.995)
+buffer=50000 | batch=64 | warmup=1000 | target_C=100
+----------------------------------------------------------------------
+Ep    10/500 | reward= -133.20 | avg50= -128.96 | sr=  0.0% | eps=0.9511 | buf=5000
+Ep    20/500 | reward= -108.40 | avg50= -123.51 | sr=  5.0% | eps=0.9046 | buf=9971
+Ep    30/500 | reward= -107.60 | avg50= -119.42 | sr=  3.3% | eps=0.8604 | buf=14971
+Ep    40/500 | reward= -110.40 | avg50= -119.14 | sr=  2.5% | eps=0.8183 | buf=19971
+Ep    50/500 | reward= -109.20 | avg50= -116.97 | sr=  2.0% | eps=0.7783 | buf=24971
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep    60/500 | reward= -102.80 | avg50= -113.70 | sr=  6.0% | eps=0.7403 | buf=29489
+Ep    70/500 | reward=  -83.40 | avg50= -110.04 | sr=  8.0% | eps=0.7041 | buf=34261
+Ep    80/500 | reward=  -90.40 | avg50= -106.67 | sr=  8.0% | eps=0.6696 | buf=39261
+Ep    90/500 | reward=  -94.80 | avg50= -100.49 | sr=  8.0% | eps=0.6369 | buf=44261
+Ep   100/500 | reward=  -74.40 | avg50=  -92.83 | sr= 18.0% | eps=0.6058 | buf=48587
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   110/500 | reward=  -83.60 | avg50=  -86.67 | sr= 14.0% | eps=0.5762 | buf=50000
+Ep   120/500 | reward=  -75.60 | avg50=  -83.77 | sr= 10.0% | eps=0.5480 | buf=50000
+Ep   130/500 | reward=  -72.80 | avg50=  -80.08 | sr= 10.0% | eps=0.5212 | buf=50000
+Ep   140/500 | reward=  -72.40 | avg50=  -75.07 | sr= 14.0% | eps=0.4957 | buf=50000
+Ep   150/500 | reward=  -77.60 | avg50=  -74.51 | sr= 12.0% | eps=0.4715 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   160/500 | reward=   -7.30 | avg50=  -65.77 | sr= 26.0% | eps=0.4484 | buf=50000
+Ep   170/500 | reward=  -13.30 | avg50=  -50.87 | sr= 46.0% | eps=0.4265 | buf=50000
+Ep   180/500 | reward=    2.50 | avg50=  -35.78 | sr= 66.0% | eps=0.4057 | buf=50000
+Ep   190/500 | reward=    4.50 | avg50=  -22.79 | sr= 82.0% | eps=0.3858 | buf=50000
+Ep   200/500 | reward=    2.10 | avg50=   -9.12 | sr= 94.0% | eps=0.3670 | buf=50000
+  [eval] success=100.0% | mean_r=7.50 | mean_steps=26.0
+Ep   210/500 | reward=   -3.90 | avg50=   -1.64 | sr=100.0% | eps=0.3490 | buf=50000
+Ep   220/500 | reward=    3.00 | avg50=    1.24 | sr=100.0% | eps=0.3320 | buf=50000
+Ep   230/500 | reward=    3.30 | avg50=    1.98 | sr=100.0% | eps=0.3157 | buf=50000
+Ep   240/500 | reward=    5.00 | avg50=    2.31 | sr=100.0% | eps=0.3003 | buf=50000
+Ep   250/500 | reward=   -2.80 | avg50=    2.40 | sr=100.0% | eps=0.2856 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   260/500 | reward=    5.50 | avg50=    3.43 | sr=100.0% | eps=0.2716 | buf=50000
+Ep   270/500 | reward=    5.80 | avg50=    3.78 | sr=100.0% | eps=0.2584 | buf=50000
+Ep   280/500 | reward=    2.70 | avg50=    4.19 | sr=100.0% | eps=0.2457 | buf=50000
+Ep   290/500 | reward=    6.70 | avg50=    4.51 | sr=100.0% | eps=0.2337 | buf=50000
+Ep   300/500 | reward=    7.70 | avg50=    5.19 | sr=100.0% | eps=0.2223 | buf=50000
+  [eval] success=100.0% | mean_r=8.10 | mean_steps=20.0
+Ep   310/500 | reward=    6.30 | avg50=    5.51 | sr=100.0% | eps=0.2114 | buf=50000
+Ep   320/500 | reward=    5.50 | avg50=    5.63 | sr=100.0% | eps=0.2011 | buf=50000
+Ep   330/500 | reward=    5.20 | avg50=    5.44 | sr=100.0% | eps=0.1913 | buf=50000
+Ep   340/500 | reward=    6.00 | avg50=    5.29 | sr=100.0% | eps=0.1819 | buf=50000
+Ep   350/500 | reward=   -1.90 | avg50=    5.27 | sr=100.0% | eps=0.1730 | buf=50000
+  [eval] success=100.0% | mean_r=8.10 | mean_steps=20.0
+Ep   360/500 | reward=    7.50 | avg50=    5.23 | sr=100.0% | eps=0.1646 | buf=50000
+Ep   370/500 | reward=    6.40 | avg50=    5.19 | sr=100.0% | eps=0.1565 | buf=50000
+Ep   380/500 | reward=    7.60 | avg50=    5.48 | sr=100.0% | eps=0.1489 | buf=50000
+Ep   390/500 | reward=    6.80 | avg50=    5.85 | sr=100.0% | eps=0.1416 | buf=50000
+Ep   400/500 | reward=    6.50 | avg50=    6.26 | sr=100.0% | eps=0.1347 | buf=50000
+  [eval] success=100.0% | mean_r=8.20 | mean_steps=19.0
+Ep   410/500 | reward=    6.60 | avg50=    6.57 | sr=100.0% | eps=0.1281 | buf=50000
+Ep   420/500 | reward=    7.50 | avg50=    6.21 | sr=100.0% | eps=0.1218 | buf=50000
+Ep   430/500 | reward=    7.50 | avg50=    6.37 | sr=100.0% | eps=0.1159 | buf=50000
+Ep   440/500 | reward=    7.20 | avg50=    6.11 | sr=100.0% | eps=0.1102 | buf=50000
+Ep   450/500 | reward=    6.50 | avg50=    5.99 | sr=100.0% | eps=0.1048 | buf=50000
+  [eval] success=100.0% | mean_r=8.00 | mean_steps=21.0
+Ep   460/500 | reward=    7.20 | avg50=    5.81 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   470/500 | reward=    7.50 | avg50=    6.39 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   480/500 | reward=  -10.50 | avg50=    5.72 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   490/500 | reward=    1.60 | avg50=    5.26 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   500/500 | reward=    7.90 | avg50=    5.14 | sr=100.0% | eps=0.1000 | buf=50000
+  [eval] success=100.0% | mean_r=7.90 | mean_steps=22.0
+Path visualization saved: results/dqn_A1_grid_gps_seed0_sigma0.0_lr0.0005_g0.99_h256_rangefull_path.png
+
+Done. Results: results/dqn_A1_grid_gps_seed0_sigma0.0_lr0.0005_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/dqn_A1_grid_gps_seed0_sigma0.0_lr0.0005_g0.99_h256_rangefull_final.pt
+
+--- [DQN] lr=0.0005 seed=42 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+DQN Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=42
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+device=cpu | hidden=256 | lr=0.0005 | gamma=0.99
+eps: 1.0 -> 0.1 (decay=0.995)
+buffer=50000 | batch=64 | warmup=1000 | target_C=100
+----------------------------------------------------------------------
+Ep    10/500 | reward= -133.20 | avg50= -128.44 | sr= 10.0% | eps=0.9511 | buf=4981
+Ep    20/500 | reward= -136.00 | avg50= -117.96 | sr= 30.0% | eps=0.9046 | buf=9227
+Ep    30/500 | reward= -119.30 | avg50= -114.24 | sr= 36.7% | eps=0.8604 | buf=13376
+Ep    40/500 | reward= -124.00 | avg50= -115.34 | sr= 37.5% | eps=0.8183 | buf=17587
+Ep    50/500 | reward= -164.00 | avg50= -119.41 | sr= 32.0% | eps=0.7783 | buf=22491
+  [eval] success=0.0% | mean_r=-250.00 | mean_steps=500.0
+Ep    60/500 | reward=  -81.60 | avg50= -121.61 | sr= 32.0% | eps=0.7403 | buf=27352
+Ep    70/500 | reward=  -85.20 | avg50= -118.00 | sr= 38.0% | eps=0.7041 | buf=30740
+Ep    80/500 | reward=  -92.50 | avg50= -120.96 | sr= 40.0% | eps=0.6696 | buf=35054
+Ep    90/500 | reward= -117.30 | avg50= -118.68 | sr= 44.0% | eps=0.6369 | buf=39009
+Ep   100/500 | reward=  -66.50 | avg50= -112.02 | sr= 58.0% | eps=0.6058 | buf=42858
+  [eval] success=0.0% | mean_r=-249.60 | mean_steps=500.0
+Ep   110/500 | reward=  -81.80 | avg50=  -97.32 | sr= 74.0% | eps=0.5762 | buf=45641
+Ep   120/500 | reward=  -36.40 | avg50=  -93.69 | sr= 74.0% | eps=0.5480 | buf=48396
+Ep   130/500 | reward= -191.60 | avg50=  -97.72 | sr= 68.0% | eps=0.5212 | buf=50000
+Ep   140/500 | reward=  -33.90 | avg50= -104.41 | sr= 62.0% | eps=0.4957 | buf=50000
+Ep   150/500 | reward= -164.40 | avg50= -114.99 | sr= 50.0% | eps=0.4715 | buf=50000
+  [eval] success=0.0% | mean_r=-249.60 | mean_steps=500.0
+Ep   160/500 | reward= -183.20 | avg50= -133.52 | sr= 34.0% | eps=0.4484 | buf=50000
+Ep   170/500 | reward= -152.00 | avg50= -153.07 | sr= 18.0% | eps=0.4265 | buf=50000
+Ep   180/500 | reward= -113.50 | avg50= -159.50 | sr= 16.0% | eps=0.4057 | buf=50000
+Ep   190/500 | reward= -175.20 | avg50= -160.72 | sr= 14.0% | eps=0.3858 | buf=50000
+Ep   200/500 | reward= -176.80 | avg50= -156.59 | sr= 16.0% | eps=0.3670 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   210/500 | reward= -109.20 | avg50= -150.42 | sr= 14.0% | eps=0.3490 | buf=50000
+Ep   220/500 | reward= -102.40 | avg50= -138.65 | sr= 14.0% | eps=0.3320 | buf=50000
+Ep   230/500 | reward=  -92.40 | avg50= -127.85 | sr= 10.0% | eps=0.3157 | buf=50000
+Ep   240/500 | reward= -128.00 | avg50= -122.59 | sr=  6.0% | eps=0.3003 | buf=50000
+Ep   250/500 | reward=  -95.60 | avg50= -122.70 | sr=  0.0% | eps=0.2856 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   260/500 | reward= -125.60 | avg50= -113.50 | sr=  4.0% | eps=0.2716 | buf=50000
+Ep   270/500 | reward=  -89.60 | avg50= -110.29 | sr=  4.0% | eps=0.2584 | buf=50000
+Ep   280/500 | reward= -102.40 | avg50= -104.24 | sr=  4.0% | eps=0.2457 | buf=50000
+Ep   290/500 | reward=  -75.20 | avg50=  -94.97 | sr=  6.0% | eps=0.2337 | buf=50000
+Ep   300/500 | reward= -113.20 | avg50=  -85.17 | sr=  6.0% | eps=0.2223 | buf=50000
+  [eval] success=0.0% | mean_r=-250.00 | mean_steps=500.0
+Ep   310/500 | reward=  -72.40 | avg50=  -85.70 | sr=  2.0% | eps=0.2114 | buf=50000
+Ep   320/500 | reward=  -71.20 | avg50=  -82.94 | sr=  2.0% | eps=0.2011 | buf=50000
+Ep   330/500 | reward=   -4.40 | avg50=  -81.86 | sr=  6.0% | eps=0.1913 | buf=50000
+Ep   340/500 | reward=  -79.20 | avg50=  -84.40 | sr=  6.0% | eps=0.1819 | buf=50000
+Ep   350/500 | reward=  -73.60 | avg50=  -81.80 | sr=  6.0% | eps=0.1730 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   360/500 | reward=  -90.40 | avg50=  -80.26 | sr=  6.0% | eps=0.1646 | buf=50000
+Ep   370/500 | reward=  -73.60 | avg50=  -79.13 | sr=  6.0% | eps=0.1565 | buf=50000
+Ep   380/500 | reward=  -73.60 | avg50=  -79.63 | sr=  2.0% | eps=0.1489 | buf=50000
+Ep   390/500 | reward=  -62.80 | avg50=  -79.87 | sr=  0.0% | eps=0.1416 | buf=50000
+Ep   400/500 | reward=  -67.20 | avg50=  -79.56 | sr=  0.0% | eps=0.1347 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   410/500 | reward=  -72.00 | avg50=  -78.33 | sr=  0.0% | eps=0.1281 | buf=50000
+Ep   420/500 | reward=  -68.40 | avg50=  -78.46 | sr=  0.0% | eps=0.1218 | buf=50000
+Ep   430/500 | reward=  -73.20 | avg50=  -75.81 | sr=  0.0% | eps=0.1159 | buf=50000
+Ep   440/500 | reward= -125.20 | avg50=  -74.79 | sr=  2.0% | eps=0.1102 | buf=50000
+Ep   450/500 | reward=  -62.80 | avg50=  -74.66 | sr=  2.0% | eps=0.1048 | buf=50000
+  [eval] success=0.0% | mean_r=-247.60 | mean_steps=500.0
+Ep   460/500 | reward=  -59.60 | avg50=  -74.28 | sr=  2.0% | eps=0.1000 | buf=50000
+Ep   470/500 | reward=  -99.60 | avg50=  -73.92 | sr=  2.0% | eps=0.1000 | buf=50000
+Ep   480/500 | reward= -143.20 | avg50=  -80.00 | sr=  2.0% | eps=0.1000 | buf=50000
+Ep   490/500 | reward=  -57.60 | avg50=  -76.35 | sr=  0.0% | eps=0.1000 | buf=50000
+Ep   500/500 | reward=  -72.80 | avg50=  -75.68 | sr=  0.0% | eps=0.1000 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Path visualization saved: results/dqn_A1_grid_gps_seed42_sigma0.0_lr0.0005_g0.99_h256_rangefull_path.png
+
+Done. Results: results/dqn_A1_grid_gps_seed42_sigma0.0_lr0.0005_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/dqn_A1_grid_gps_seed42_sigma0.0_lr0.0005_g0.99_h256_rangefull_final.pt
+
+--- [DQN] lr=0.001 seed=0 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+DQN Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=0
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+device=cpu | hidden=256 | lr=0.001 | gamma=0.99
+eps: 1.0 -> 0.1 (decay=0.995)
+buffer=50000 | batch=64 | warmup=1000 | target_C=100
+----------------------------------------------------------------------
+Ep    10/500 | reward=  -54.70 | avg50= -115.36 | sr= 20.0% | eps=0.9511 | buf=4578
+Ep    20/500 | reward= -129.60 | avg50= -118.70 | sr= 20.0% | eps=0.9046 | buf=9164
+Ep    30/500 | reward=  -33.20 | avg50= -113.57 | sr= 23.3% | eps=0.8604 | buf=13327
+Ep    40/500 | reward= -109.60 | avg50= -108.46 | sr= 25.0% | eps=0.8183 | buf=17566
+Ep    50/500 | reward=  -98.40 | avg50= -106.26 | sr= 22.0% | eps=0.7783 | buf=22241
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep    60/500 | reward=  -87.20 | avg50= -102.16 | sr= 18.0% | eps=0.7403 | buf=27241
+Ep    70/500 | reward=  -87.60 | avg50=  -95.41 | sr= 14.0% | eps=0.7041 | buf=32241
+Ep    80/500 | reward=  -81.20 | avg50=  -92.04 | sr=  8.0% | eps=0.6696 | buf=37241
+Ep    90/500 | reward=  -86.40 | avg50=  -90.42 | sr=  2.0% | eps=0.6369 | buf=42241
+Ep   100/500 | reward=  -90.80 | avg50=  -89.06 | sr=  0.0% | eps=0.6058 | buf=47241
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   110/500 | reward=  -76.40 | avg50=  -86.56 | sr=  4.0% | eps=0.5762 | buf=50000
+Ep   120/500 | reward=  -87.60 | avg50=  -85.76 | sr=  6.0% | eps=0.5480 | buf=50000
+Ep   130/500 | reward=  -23.30 | avg50=  -81.74 | sr= 14.0% | eps=0.5212 | buf=50000
+Ep   140/500 | reward=  -40.40 | avg50=  -73.27 | sr= 30.0% | eps=0.4957 | buf=50000
+Ep   150/500 | reward= -141.20 | avg50=  -69.62 | sr= 38.0% | eps=0.4715 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   160/500 | reward=  -10.60 | avg50=  -58.35 | sr= 52.0% | eps=0.4484 | buf=50000
+Ep   170/500 | reward=  -36.20 | avg50=  -44.07 | sr= 70.0% | eps=0.4265 | buf=50000
+Ep   180/500 | reward=  -12.70 | avg50=  -32.36 | sr= 82.0% | eps=0.4057 | buf=50000
+Ep   190/500 | reward=   -6.90 | avg50=  -28.08 | sr= 84.0% | eps=0.3858 | buf=50000
+Ep   200/500 | reward=  -15.50 | avg50=  -16.72 | sr= 96.0% | eps=0.3670 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   210/500 | reward=   -1.80 | avg50=  -11.69 | sr= 98.0% | eps=0.3490 | buf=50000
+Ep   220/500 | reward=   -4.30 | avg50=   -8.92 | sr= 98.0% | eps=0.3320 | buf=50000
+Ep   230/500 | reward=    3.40 | avg50=   -7.16 | sr= 98.0% | eps=0.3157 | buf=50000
+Ep   240/500 | reward=    2.80 | avg50=   -2.49 | sr=100.0% | eps=0.3003 | buf=50000
+Ep   250/500 | reward=    4.50 | avg50=    1.25 | sr=100.0% | eps=0.2856 | buf=50000
+  [eval] success=100.0% | mean_r=7.80 | mean_steps=23.0
+Ep   260/500 | reward=    5.80 | avg50=    2.41 | sr=100.0% | eps=0.2716 | buf=50000
+Ep   270/500 | reward=    4.10 | avg50=    3.26 | sr=100.0% | eps=0.2584 | buf=50000
+Ep   280/500 | reward=    0.80 | avg50=    4.08 | sr=100.0% | eps=0.2457 | buf=50000
+Ep   290/500 | reward=    3.90 | avg50=    4.52 | sr=100.0% | eps=0.2337 | buf=50000
+Ep   300/500 | reward=    5.00 | avg50=    5.07 | sr=100.0% | eps=0.2223 | buf=50000
+  [eval] success=100.0% | mean_r=7.80 | mean_steps=23.0
+Ep   310/500 | reward=    7.30 | avg50=    5.25 | sr=100.0% | eps=0.2114 | buf=50000
+Ep   320/500 | reward=    6.70 | avg50=    5.32 | sr=100.0% | eps=0.2011 | buf=50000
+Ep   330/500 | reward=    4.90 | avg50=    4.70 | sr=100.0% | eps=0.1913 | buf=50000
+Ep   340/500 | reward=   -5.80 | avg50=    4.40 | sr=100.0% | eps=0.1819 | buf=50000
+Ep   350/500 | reward=    7.40 | avg50=    4.39 | sr=100.0% | eps=0.1730 | buf=50000
+  [eval] success=100.0% | mean_r=8.00 | mean_steps=21.0
+Ep   360/500 | reward=    5.80 | avg50=    4.13 | sr=100.0% | eps=0.1646 | buf=50000
+Ep   370/500 | reward=    7.40 | avg50=    3.53 | sr=100.0% | eps=0.1565 | buf=50000
+Ep   380/500 | reward=   -3.70 | avg50=    4.25 | sr=100.0% | eps=0.1489 | buf=50000
+Ep   390/500 | reward=    8.10 | avg50=    4.64 | sr=100.0% | eps=0.1416 | buf=50000
+Ep   400/500 | reward=    7.60 | avg50=    4.90 | sr=100.0% | eps=0.1347 | buf=50000
+  [eval] success=100.0% | mean_r=8.20 | mean_steps=19.0
+Ep   410/500 | reward=    7.90 | avg50=    5.22 | sr=100.0% | eps=0.1281 | buf=50000
+Ep   420/500 | reward=    7.80 | avg50=    6.17 | sr=100.0% | eps=0.1218 | buf=50000
+Ep   430/500 | reward=    7.60 | avg50=    6.49 | sr=100.0% | eps=0.1159 | buf=50000
+Ep   440/500 | reward=    7.50 | avg50=    7.01 | sr=100.0% | eps=0.1102 | buf=50000
+Ep   450/500 | reward=    6.80 | avg50=    7.02 | sr=100.0% | eps=0.1048 | buf=50000
+  [eval] success=100.0% | mean_r=7.80 | mean_steps=23.0
+Ep   460/500 | reward=    7.00 | avg50=    7.13 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   470/500 | reward=    7.00 | avg50=    7.17 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   480/500 | reward=    7.00 | avg50=    7.07 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   490/500 | reward=   -5.20 | avg50=    5.85 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   500/500 | reward=   -6.00 | avg50=    2.11 | sr=100.0% | eps=0.1000 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Path visualization saved: results/dqn_A1_grid_gps_seed0_sigma0.0_lr0.001_g0.99_h256_rangefull_path.png
+
+Done. Results: results/dqn_A1_grid_gps_seed0_sigma0.0_lr0.001_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/dqn_A1_grid_gps_seed0_sigma0.0_lr0.001_g0.99_h256_rangefull_final.pt
+
+--- [DQN] lr=0.001 seed=42 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+DQN Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=42
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+device=cpu | hidden=256 | lr=0.001 | gamma=0.99
+eps: 1.0 -> 0.1 (decay=0.995)
+buffer=50000 | batch=64 | warmup=1000 | target_C=100
+----------------------------------------------------------------------
+Ep    10/500 | reward= -139.60 | avg50= -131.64 | sr=  0.0% | eps=0.9511 | buf=5000
+Ep    20/500 | reward= -117.20 | avg50= -124.40 | sr=  0.0% | eps=0.9046 | buf=10000
+Ep    30/500 | reward=  -33.10 | avg50= -118.41 | sr=  3.3% | eps=0.8604 | buf=14696
+Ep    40/500 | reward= -100.80 | avg50= -115.97 | sr=  2.5% | eps=0.8183 | buf=19696
+Ep    50/500 | reward=  -92.40 | avg50= -112.28 | sr=  2.0% | eps=0.7783 | buf=24696
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep    60/500 | reward= -104.00 | avg50= -105.07 | sr=  2.0% | eps=0.7403 | buf=29696
+Ep    70/500 | reward= -111.00 | avg50=  -99.57 | sr= 10.0% | eps=0.7041 | buf=34360
+Ep    80/500 | reward=  -96.40 | avg50=  -93.31 | sr= 18.0% | eps=0.6696 | buf=38121
+Ep    90/500 | reward=  -90.00 | avg50=  -87.40 | sr= 24.0% | eps=0.6369 | buf=42615
+Ep   100/500 | reward=  -15.50 | avg50=  -81.15 | sr= 32.0% | eps=0.6058 | buf=46405
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   110/500 | reward=  -38.50 | avg50=  -74.89 | sr= 40.0% | eps=0.5762 | buf=49992
+Ep   120/500 | reward=  -31.00 | avg50=  -64.73 | sr= 50.0% | eps=0.5480 | buf=50000
+Ep   130/500 | reward=  -32.00 | avg50=  -56.61 | sr= 60.0% | eps=0.5212 | buf=50000
+Ep   140/500 | reward=  -83.60 | avg50=  -47.47 | sr= 72.0% | eps=0.4957 | buf=50000
+Ep   150/500 | reward=  -10.60 | avg50=  -37.02 | sr= 84.0% | eps=0.4715 | buf=50000
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   160/500 | reward=   -3.20 | avg50=  -26.19 | sr= 96.0% | eps=0.4484 | buf=50000
+Ep   170/500 | reward=    2.00 | avg50=  -18.40 | sr= 98.0% | eps=0.4265 | buf=50000
+Ep   180/500 | reward=    5.10 | avg50=  -11.19 | sr= 98.0% | eps=0.4057 | buf=50000
+Ep   190/500 | reward=    4.50 | avg50=   -3.96 | sr=100.0% | eps=0.3858 | buf=50000
+Ep   200/500 | reward=    6.80 | avg50=   -0.30 | sr=100.0% | eps=0.3670 | buf=50000
+  [eval] success=100.0% | mean_r=8.20 | mean_steps=19.0
+Ep   210/500 | reward=    6.10 | avg50=    2.74 | sr=100.0% | eps=0.3490 | buf=50000
+Ep   220/500 | reward=    4.80 | avg50=    3.77 | sr=100.0% | eps=0.3320 | buf=50000
+Ep   230/500 | reward=    6.20 | avg50=    4.68 | sr=100.0% | eps=0.3157 | buf=50000
+Ep   240/500 | reward=    5.90 | avg50=    5.29 | sr=100.0% | eps=0.3003 | buf=50000
+Ep   250/500 | reward=    8.30 | avg50=    5.07 | sr=100.0% | eps=0.2856 | buf=50000
+  [eval] success=100.0% | mean_r=8.30 | mean_steps=18.0
+Ep   260/500 | reward=    7.60 | avg50=    5.23 | sr=100.0% | eps=0.2716 | buf=50000
+Ep   270/500 | reward=    6.80 | avg50=    5.41 | sr=100.0% | eps=0.2584 | buf=50000
+Ep   280/500 | reward=    5.00 | avg50=    5.37 | sr=100.0% | eps=0.2457 | buf=50000
+Ep   290/500 | reward=    4.70 | avg50=    5.59 | sr=100.0% | eps=0.2337 | buf=50000
+Ep   300/500 | reward=    6.10 | avg50=    6.28 | sr=100.0% | eps=0.2223 | buf=50000
+  [eval] success=100.0% | mean_r=8.30 | mean_steps=18.0
+Ep   310/500 | reward=    7.80 | avg50=    6.55 | sr=100.0% | eps=0.2114 | buf=50000
+Ep   320/500 | reward=    7.70 | avg50=    6.81 | sr=100.0% | eps=0.2011 | buf=50000
+Ep   330/500 | reward=    1.00 | avg50=    5.66 | sr=100.0% | eps=0.1913 | buf=50000
+Ep   340/500 | reward=    7.40 | avg50=    4.98 | sr=100.0% | eps=0.1819 | buf=50000
+Ep   350/500 | reward=    4.90 | avg50=    4.71 | sr=100.0% | eps=0.1730 | buf=50000
+  [eval] success=0.0% | mean_r=-246.80 | mean_steps=500.0
+Ep   360/500 | reward=    7.40 | avg50=    4.21 | sr=100.0% | eps=0.1646 | buf=50000
+Ep   370/500 | reward=    6.60 | avg50=    4.12 | sr=100.0% | eps=0.1565 | buf=50000
+Ep   380/500 | reward=    6.60 | avg50=    5.52 | sr=100.0% | eps=0.1489 | buf=50000
+Ep   390/500 | reward=   -4.20 | avg50=    5.87 | sr=100.0% | eps=0.1416 | buf=50000
+Ep   400/500 | reward=    7.50 | avg50=    5.85 | sr=100.0% | eps=0.1347 | buf=50000
+  [eval] success=100.0% | mean_r=8.30 | mean_steps=18.0
+Ep   410/500 | reward=    8.00 | avg50=    6.08 | sr=100.0% | eps=0.1281 | buf=50000
+Ep   420/500 | reward=    7.30 | avg50=    6.17 | sr=100.0% | eps=0.1218 | buf=50000
+Ep   430/500 | reward=    2.10 | avg50=    2.94 | sr=100.0% | eps=0.1159 | buf=50000
+Ep   440/500 | reward=    8.30 | avg50=    2.53 | sr=100.0% | eps=0.1102 | buf=50000
+Ep   450/500 | reward=    8.20 | avg50=    3.03 | sr=100.0% | eps=0.1048 | buf=50000
+  [eval] success=100.0% | mean_r=8.20 | mean_steps=19.0
+Ep   460/500 | reward=    7.70 | avg50=    3.39 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   470/500 | reward=    7.80 | avg50=    3.48 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   480/500 | reward=    6.90 | avg50=    6.80 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   490/500 | reward=    8.30 | avg50=    7.72 | sr=100.0% | eps=0.1000 | buf=50000
+Ep   500/500 | reward=    8.10 | avg50=    7.69 | sr=100.0% | eps=0.1000 | buf=50000
+  [eval] success=100.0% | mean_r=8.30 | mean_steps=18.0
+Path visualization saved: results/dqn_A1_grid_gps_seed42_sigma0.0_lr0.001_g0.99_h256_rangefull_path.png
+
+Done. Results: results/dqn_A1_grid_gps_seed42_sigma0.0_lr0.001_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/dqn_A1_grid_gps_seed42_sigma0.0_lr0.001_g0.99_h256_rangefull_final.pt
+
+--- [PPO] lr=0.0001 seed=0 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+PPO Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=0
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+hidden=256 | lr=0.0001 | gamma=0.99 | clip=0.2
+rollout_steps=2048 | minibatch=64 | k_epochs=4 | entropy=0.05
+----------------------------------------------------------------------
+Ep    10/500 | reward= -209.30 | avg50= -238.10 | sr=  0.0%
+Ep    20/500 | reward= -202.10 | avg50= -220.52 | sr=  5.0%
+Ep    30/500 | reward= -212.00 | avg50= -217.43 | sr=  6.7%
+Ep    40/500 | reward= -163.40 | avg50= -211.84 | sr=  5.0%
+Ep    50/500 | reward= -160.70 | avg50= -206.36 | sr=  4.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep    60/500 | reward= -191.30 | avg50= -198.91 | sr=  4.0%
+Ep    70/500 | reward= -195.80 | avg50= -197.61 | sr=  2.0%
+Ep    80/500 | reward= -185.90 | avg50= -196.25 | sr=  0.0%
+Ep    90/500 | reward= -179.60 | avg50= -194.39 | sr=  2.0%
+Ep   100/500 | reward= -210.20 | avg50= -193.26 | sr=  4.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   110/500 | reward= -188.60 | avg50= -192.44 | sr=  4.0%
+Ep   120/500 | reward= -186.80 | avg50= -187.45 | sr= 10.0%
+Ep   130/500 | reward= -229.10 | avg50= -192.18 | sr= 10.0%
+Ep   140/500 | reward= -207.50 | avg50= -196.19 | sr=  8.0%
+Ep   150/500 | reward= -185.00 | avg50= -196.41 | sr=  8.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   160/500 | reward= -183.20 | avg50= -192.88 | sr= 10.0%
+Ep   170/500 | reward= -207.50 | avg50= -196.89 | sr=  4.0%
+Ep   180/500 | reward= -194.00 | avg50= -188.63 | sr=  4.0%
+Ep   190/500 | reward= -165.40 | avg50= -183.20 | sr=  6.0%
+Ep   200/500 | reward= -151.70 | avg50= -179.75 | sr=  4.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   210/500 | reward= -159.80 | avg50= -178.54 | sr=  2.0%
+Ep   220/500 | reward= -157.10 | avg50= -172.58 | sr=  2.0%
+Ep   230/500 | reward= -169.70 | avg50= -168.89 | sr=  2.0%
+Ep   240/500 | reward= -162.50 | avg50= -168.03 | sr=  0.0%
+Ep   250/500 | reward= -176.90 | avg50= -169.63 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   260/500 | reward= -161.60 | avg50= -168.55 | sr=  0.0%
+Ep   270/500 | reward= -161.60 | avg50= -167.70 | sr=  0.0%
+Ep   280/500 | reward= -155.30 | avg50= -167.07 | sr=  0.0%
+Ep   290/500 | reward= -148.10 | avg50= -162.81 | sr=  0.0%
+Ep   300/500 | reward= -140.90 | avg50= -158.27 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   310/500 | reward= -153.50 | avg50= -155.10 | sr=  0.0%
+Ep   320/500 | reward= -152.60 | avg50= -153.18 | sr=  0.0%
+Ep   330/500 | reward= -132.80 | avg50= -148.24 | sr=  0.0%
+Ep   340/500 | reward= -115.70 | avg50= -143.64 | sr=  0.0%
+Ep   350/500 | reward= -142.70 | avg50= -138.24 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   360/500 | reward=  -99.50 | avg50= -131.65 | sr=  0.0%
+Ep   370/500 | reward= -124.70 | avg50= -126.34 | sr=  0.0%
+Ep   380/500 | reward= -117.50 | avg50= -122.67 | sr=  0.0%
+Ep   390/500 | reward= -116.60 | avg50= -121.06 | sr=  0.0%
+Ep   400/500 | reward= -117.50 | avg50= -120.88 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   410/500 | reward= -107.60 | avg50= -120.20 | sr=  0.0%
+Ep   420/500 | reward= -102.20 | avg50= -118.18 | sr=  0.0%
+Ep   430/500 | reward= -100.40 | avg50= -114.60 | sr=  0.0%
+Ep   440/500 | reward=  -89.60 | avg50= -109.40 | sr=  0.0%
+Ep   450/500 | reward=  -95.00 | avg50= -104.99 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   460/500 | reward=  -93.20 | avg50= -100.90 | sr=  0.0%
+Ep   470/500 | reward=  -77.90 | avg50=  -95.70 | sr=  0.0%
+Ep   480/500 | reward=  -84.20 | avg50=  -91.04 | sr=  0.0%
+Ep   490/500 | reward=  -77.90 | avg50=  -87.89 | sr=  0.0%
+Ep   500/500 | reward=  -73.40 | avg50=  -83.52 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Learning curve saved: results/ppo_A1_grid_gps_learning_curve_20260621_174635.png
+Path visualization saved: results/ppo_A1_grid_gps_seed0_sigma0.0_lr0.0001_g0.99_h256_rangefull_path.png
+
+Done. Results: results/ppo_A1_grid_gps_seed0_sigma0.0_lr0.0001_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/ppo_A1_grid_gps_seed0_sigma0.0_lr0.0001_g0.99_h256_rangefull_final.pt
+
+--- [PPO] lr=0.0001 seed=42 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+PPO Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=42
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+hidden=256 | lr=0.0001 | gamma=0.99 | clip=0.2
+rollout_steps=2048 | minibatch=64 | k_epochs=4 | entropy=0.05
+----------------------------------------------------------------------
+Ep    10/500 | reward= -192.50 | avg50= -228.23 | sr= 10.0%
+Ep    20/500 | reward= -199.40 | avg50= -214.68 | sr= 15.0%
+Ep    30/500 | reward= -173.30 | avg50= -211.96 | sr= 10.0%
+Ep    40/500 | reward= -197.60 | avg50= -207.33 | sr=  7.5%
+Ep    50/500 | reward= -194.90 | avg50= -205.12 | sr=  6.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep    60/500 | reward= -164.30 | avg50= -193.97 | sr=  4.0%
+Ep    70/500 | reward= -206.60 | avg50= -190.24 | sr=  0.0%
+Ep    80/500 | reward= -173.30 | avg50= -185.99 | sr=  0.0%
+Ep    90/500 | reward= -183.20 | avg50= -183.78 | sr=  0.0%
+Ep   100/500 | reward= -179.60 | avg50= -180.74 | sr=  2.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   110/500 | reward= -192.20 | avg50= -183.07 | sr=  4.0%
+Ep   120/500 | reward= -170.60 | avg50= -180.28 | sr=  4.0%
+Ep   130/500 | reward= -173.30 | avg50= -178.97 | sr=  4.0%
+Ep   140/500 | reward= -166.10 | avg50= -178.12 | sr=  4.0%
+Ep   150/500 | reward= -176.90 | avg50= -178.21 | sr=  2.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   160/500 | reward= -167.90 | avg50= -175.01 | sr=  0.0%
+Ep   170/500 | reward= -185.90 | avg50= -177.58 | sr=  0.0%
+Ep   180/500 | reward= -172.40 | avg50= -175.55 | sr=  0.0%
+Ep   190/500 | reward= -167.90 | avg50= -173.70 | sr=  0.0%
+Ep   200/500 | reward= -158.00 | avg50= -171.84 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   210/500 | reward= -162.50 | avg50= -171.73 | sr=  0.0%
+Ep   220/500 | reward= -177.80 | avg50= -168.37 | sr=  0.0%
+Ep   230/500 | reward= -168.80 | avg50= -167.49 | sr=  0.0%
+Ep   240/500 | reward= -193.10 | avg50= -168.37 | sr=  0.0%
+Ep   250/500 | reward= -154.40 | avg50= -166.87 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   260/500 | reward= -176.90 | avg50= -166.21 | sr=  0.0%
+Ep   270/500 | reward= -176.90 | avg50= -166.28 | sr=  0.0%
+Ep   280/500 | reward= -154.40 | avg50= -167.43 | sr=  0.0%
+Ep   290/500 | reward= -176.00 | avg50= -166.08 | sr=  0.0%
+Ep   300/500 | reward= -165.20 | avg50= -165.88 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   310/500 | reward= -151.70 | avg50= -165.22 | sr=  0.0%
+Ep   320/500 | reward= -140.00 | avg50= -162.41 | sr=  0.0%
+Ep   330/500 | reward= -142.70 | avg50= -161.11 | sr=  0.0%
+Ep   340/500 | reward= -138.20 | avg50= -156.06 | sr=  0.0%
+Ep   350/500 | reward= -140.90 | avg50= -151.54 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   360/500 | reward= -122.00 | avg50= -144.95 | sr=  0.0%
+Ep   370/500 | reward= -131.00 | avg50= -139.59 | sr=  0.0%
+Ep   380/500 | reward= -115.70 | avg50= -131.18 | sr=  0.0%
+Ep   390/500 | reward= -113.00 | avg50= -125.58 | sr=  0.0%
+Ep   400/500 | reward= -100.40 | avg50= -118.69 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   410/500 | reward=  -93.20 | avg50= -112.57 | sr=  0.0%
+Ep   420/500 | reward=  -89.60 | avg50= -106.66 | sr=  0.0%
+Ep   430/500 | reward=  -91.40 | avg50= -101.30 | sr=  0.0%
+Ep   440/500 | reward=  -88.70 | avg50=  -97.03 | sr=  0.0%
+Ep   450/500 | reward=  -78.80 | avg50=  -92.39 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   460/500 | reward=  -87.80 | avg50=  -90.43 | sr=  0.0%
+Ep   470/500 | reward=  -78.80 | avg50=  -88.07 | sr=  0.0%
+Ep   480/500 | reward=  -76.10 | avg50=  -85.64 | sr=  0.0%
+Ep   490/500 | reward=  -69.80 | avg50=  -82.35 | sr=  0.0%
+Ep   500/500 | reward=  -82.40 | avg50=  -81.81 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Learning curve saved: results/ppo_A1_grid_gps_learning_curve_20260621_174746.png
+Path visualization saved: results/ppo_A1_grid_gps_seed42_sigma0.0_lr0.0001_g0.99_h256_rangefull_path.png
+
+Done. Results: results/ppo_A1_grid_gps_seed42_sigma0.0_lr0.0001_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/ppo_A1_grid_gps_seed42_sigma0.0_lr0.0001_g0.99_h256_rangefull_final.pt
+
+--- [PPO] lr=0.0003 seed=0 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+PPO Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=0
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+hidden=256 | lr=0.0003 | gamma=0.99 | clip=0.2
+rollout_steps=2048 | minibatch=64 | k_epochs=4 | entropy=0.05
+----------------------------------------------------------------------
+Ep    10/500 | reward= -223.70 | avg50= -224.90 | sr= 10.0%
+Ep    20/500 | reward= -201.20 | avg50= -218.09 | sr=  5.0%
+Ep    30/500 | reward= -214.70 | avg50= -211.94 | sr=  6.7%
+Ep    40/500 | reward= -277.70 | avg50= -209.95 | sr=  5.0%
+Ep    50/500 | reward= -167.90 | avg50= -206.57 | sr=  4.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep    60/500 | reward= -188.60 | avg50= -198.77 | sr=  2.0%
+Ep    70/500 | reward= -144.50 | avg50= -191.46 | sr=  2.0%
+Ep    80/500 | reward= -181.40 | avg50= -185.56 | sr=  0.0%
+Ep    90/500 | reward= -177.80 | avg50= -179.94 | sr=  0.0%
+Ep   100/500 | reward= -172.40 | avg50= -175.19 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   110/500 | reward= -159.80 | avg50= -170.33 | sr=  0.0%
+Ep   120/500 | reward= -160.70 | avg50= -168.87 | sr=  0.0%
+Ep   130/500 | reward= -165.20 | avg50= -167.07 | sr=  0.0%
+Ep   140/500 | reward= -161.60 | avg50= -163.44 | sr=  0.0%
+Ep   150/500 | reward= -129.20 | avg50= -157.03 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   160/500 | reward= -140.00 | avg50= -151.34 | sr=  0.0%
+Ep   170/500 | reward= -136.40 | avg50= -146.55 | sr=  0.0%
+Ep   180/500 | reward= -158.90 | avg50= -143.67 | sr=  0.0%
+Ep   190/500 | reward= -120.20 | avg50= -139.96 | sr=  0.0%
+Ep   200/500 | reward= -114.80 | avg50= -136.00 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   210/500 | reward= -117.50 | avg50= -131.61 | sr=  0.0%
+Ep   220/500 | reward= -107.60 | avg50= -123.82 | sr=  0.0%
+Ep   230/500 | reward= -106.70 | avg50= -115.23 | sr=  0.0%
+Ep   240/500 | reward=  -82.40 | avg50= -106.41 | sr=  0.0%
+Ep   250/500 | reward=  -81.50 | avg50= -100.02 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   260/500 | reward=  -88.70 | avg50=  -94.26 | sr=  0.0%
+Ep   270/500 | reward=  -84.20 | avg50=  -89.64 | sr=  0.0%
+Ep   280/500 | reward=  -75.20 | avg50=  -84.07 | sr=  0.0%
+Ep   290/500 | reward=  -74.30 | avg50=  -79.77 | sr=  0.0%
+Ep   300/500 | reward=  -70.70 | avg50=  -76.87 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   310/500 | reward=  -68.90 | avg50=  -74.89 | sr=  0.0%
+Ep   320/500 | reward=  -62.60 | avg50=  -71.83 | sr=  0.0%
+Ep   330/500 | reward=  -67.10 | avg50=  -69.22 | sr=  0.0%
+Ep   340/500 | reward=  -58.10 | avg50=  -67.12 | sr=  0.0%
+Ep   350/500 | reward=  -55.40 | avg50=  -64.74 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   360/500 | reward=  -61.70 | avg50=  -62.35 | sr=  0.0%
+Ep   370/500 | reward=  -58.10 | avg50=  -60.91 | sr=  0.0%
+Ep   380/500 | reward=  -52.70 | avg50=  -59.38 | sr=  0.0%
+Ep   390/500 | reward=  -54.50 | avg50=  -58.05 | sr=  0.0%
+Ep   400/500 | reward=  -56.30 | avg50=  -57.70 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   410/500 | reward=  -55.40 | avg50=  -56.62 | sr=  0.0%
+Ep   420/500 | reward=  -57.20 | avg50=  -55.87 | sr=  0.0%
+Ep   430/500 | reward=  -52.70 | avg50=  -55.78 | sr=  0.0%
+Ep   440/500 | reward=  -58.10 | avg50=  -55.42 | sr=  0.0%
+Ep   450/500 | reward=  -56.30 | avg50=  -55.08 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   460/500 | reward=  -55.40 | avg50=  -55.58 | sr=  0.0%
+Ep   470/500 | reward=  -64.40 | avg50=  -56.26 | sr=  0.0%
+Ep   480/500 | reward=  -52.70 | avg50=  -56.66 | sr=  0.0%
+Ep   490/500 | reward=  -53.60 | avg50=  -56.46 | sr=  0.0%
+Ep   500/500 | reward=  -55.40 | avg50=  -56.16 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Learning curve saved: results/ppo_A1_grid_gps_learning_curve_20260621_174857.png
+Path visualization saved: results/ppo_A1_grid_gps_seed0_sigma0.0_lr0.0003_g0.99_h256_rangefull_path.png
+
+Done. Results: results/ppo_A1_grid_gps_seed0_sigma0.0_lr0.0003_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/ppo_A1_grid_gps_seed0_sigma0.0_lr0.0003_g0.99_h256_rangefull_final.pt
+
+--- [PPO] lr=0.0003 seed=42 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+PPO Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=42
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+hidden=256 | lr=0.0003 | gamma=0.99 | clip=0.2
+rollout_steps=2048 | minibatch=64 | k_epochs=4 | entropy=0.05
+----------------------------------------------------------------------
+Ep    10/500 | reward= -206.60 | avg50= -223.70 | sr=  0.0%
+Ep    20/500 | reward= -227.30 | avg50= -213.44 | sr=  0.0%
+Ep    30/500 | reward= -207.50 | avg50= -212.08 | sr=  3.3%
+Ep    40/500 | reward= -208.40 | avg50= -210.19 | sr=  2.5%
+Ep    50/500 | reward= -185.00 | avg50= -207.49 | sr=  2.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep    60/500 | reward= -192.20 | avg50= -200.33 | sr=  2.0%
+Ep    70/500 | reward= -196.70 | avg50= -200.31 | sr=  2.0%
+Ep    80/500 | reward= -185.00 | avg50= -196.56 | sr=  2.0%
+Ep    90/500 | reward= -189.50 | avg50= -193.67 | sr=  2.0%
+Ep   100/500 | reward= -209.30 | avg50= -191.92 | sr=  2.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   110/500 | reward= -168.80 | avg50= -192.53 | sr=  2.0%
+Ep   120/500 | reward= -231.80 | avg50= -190.79 | sr=  2.0%
+Ep   130/500 | reward= -183.20 | avg50= -191.73 | sr=  0.0%
+Ep   140/500 | reward= -194.00 | avg50= -192.65 | sr=  0.0%
+Ep   150/500 | reward= -221.90 | avg50= -190.80 | sr=  2.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   160/500 | reward= -190.40 | avg50= -189.72 | sr=  2.0%
+Ep   170/500 | reward= -198.50 | avg50= -190.65 | sr=  2.0%
+Ep   180/500 | reward= -201.20 | avg50= -189.27 | sr=  2.0%
+Ep   190/500 | reward= -190.40 | avg50= -186.98 | sr=  2.0%
+Ep   200/500 | reward= -199.40 | avg50= -190.33 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   210/500 | reward= -175.10 | avg50= -190.26 | sr=  0.0%
+Ep   220/500 | reward= -194.00 | avg50= -188.51 | sr=  0.0%
+Ep   230/500 | reward= -175.10 | avg50= -188.73 | sr=  0.0%
+Ep   240/500 | reward= -180.50 | avg50= -189.12 | sr=  0.0%
+Ep   250/500 | reward= -155.30 | avg50= -183.34 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   260/500 | reward= -156.20 | avg50= -179.91 | sr=  0.0%
+Ep   270/500 | reward= -141.80 | avg50= -173.17 | sr=  0.0%
+Ep   280/500 | reward= -122.00 | avg50= -164.48 | sr=  0.0%
+Ep   290/500 | reward= -140.00 | avg50= -154.72 | sr=  0.0%
+Ep   300/500 | reward= -117.50 | avg50= -149.27 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   310/500 | reward= -132.80 | avg50= -142.77 | sr=  0.0%
+Ep   320/500 | reward= -125.60 | avg50= -134.89 | sr=  0.0%
+Ep   330/500 | reward=  -95.90 | avg50= -126.34 | sr=  0.0%
+Ep   340/500 | reward= -104.90 | avg50= -118.02 | sr=  0.0%
+Ep   350/500 | reward=  -78.80 | avg50= -108.36 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   360/500 | reward=  -89.60 | avg50=  -97.30 | sr=  0.0%
+Ep   370/500 | reward=  -73.40 | avg50=  -89.20 | sr=  0.0%
+Ep   380/500 | reward=  -80.60 | avg50=  -84.61 | sr=  0.0%
+Ep   390/500 | reward=  -73.40 | avg50=  -81.32 | sr=  0.0%
+Ep   400/500 | reward=  -75.20 | avg50=  -78.21 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   410/500 | reward=  -62.60 | avg50=  -75.76 | sr=  0.0%
+Ep   420/500 | reward=  -73.40 | avg50=  -74.08 | sr=  0.0%
+Ep   430/500 | reward=  -68.90 | avg50=  -72.19 | sr=  0.0%
+Ep   440/500 | reward=  -61.70 | avg50=  -69.13 | sr=  0.0%
+Ep   450/500 | reward=  -65.30 | avg50=  -66.40 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   460/500 | reward=  -68.00 | avg50=  -65.37 | sr=  0.0%
+Ep   470/500 | reward=  -60.80 | avg50=  -63.88 | sr=  0.0%
+Ep   480/500 | reward=  -68.90 | avg50=  -62.78 | sr=  0.0%
+Ep   490/500 | reward=  -77.00 | avg50=  -63.05 | sr=  0.0%
+Ep   500/500 | reward=  -63.50 | avg50=  -63.66 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Learning curve saved: results/ppo_A1_grid_gps_learning_curve_20260621_175006.png
+Path visualization saved: results/ppo_A1_grid_gps_seed42_sigma0.0_lr0.0003_g0.99_h256_rangefull_path.png
+
+Done. Results: results/ppo_A1_grid_gps_seed42_sigma0.0_lr0.0003_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/ppo_A1_grid_gps_seed42_sigma0.0_lr0.0003_g0.99_h256_rangefull_final.pt
+
+--- [PPO] lr=0.0005 seed=0 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+PPO Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=0
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+hidden=256 | lr=0.0005 | gamma=0.99 | clip=0.2
+rollout_steps=2048 | minibatch=64 | k_epochs=4 | entropy=0.05
+----------------------------------------------------------------------
+Ep    10/500 | reward= -221.90 | avg50= -234.50 | sr=  0.0%
+Ep    20/500 | reward= -201.20 | avg50= -215.02 | sr=  5.0%
+Ep    30/500 | reward= -203.90 | avg50= -205.06 | sr=  6.7%
+Ep    40/500 | reward= -185.90 | avg50= -200.91 | sr=  7.5%
+Ep    50/500 | reward= -169.70 | avg50= -197.26 | sr=  6.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep    60/500 | reward= -230.90 | avg50= -187.25 | sr=  8.0%
+Ep    70/500 | reward= -176.90 | avg50= -185.86 | sr=  8.0%
+Ep    80/500 | reward= -190.40 | avg50= -189.41 | sr=  6.0%
+Ep    90/500 | reward= -177.80 | avg50= -190.73 | sr=  4.0%
+Ep   100/500 | reward= -167.90 | avg50= -192.68 | sr=  6.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   110/500 | reward= -194.90 | avg50= -189.62 | sr=  6.0%
+Ep   120/500 | reward= -185.90 | avg50= -186.51 | sr=  4.0%
+Ep   130/500 | reward= -174.20 | avg50= -181.00 | sr=  4.0%
+Ep   140/500 | reward= -177.80 | avg50= -176.14 | sr=  4.0%
+Ep   150/500 | reward= -213.80 | avg50= -177.90 | sr=  2.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   160/500 | reward= -183.20 | avg50= -179.83 | sr=  0.0%
+Ep   170/500 | reward= -167.90 | avg50= -182.10 | sr=  0.0%
+Ep   180/500 | reward= -151.70 | avg50= -181.15 | sr=  0.0%
+Ep   190/500 | reward= -154.40 | avg50= -179.31 | sr=  0.0%
+Ep   200/500 | reward= -149.00 | avg50= -167.81 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   210/500 | reward= -129.20 | avg50= -161.46 | sr=  0.0%
+Ep   220/500 | reward= -124.70 | avg50= -149.70 | sr=  0.0%
+Ep   230/500 | reward= -122.90 | avg50= -138.94 | sr=  0.0%
+Ep   240/500 | reward=  -96.80 | avg50= -126.97 | sr=  0.0%
+Ep   250/500 | reward=  -77.00 | avg50= -115.84 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   260/500 | reward=  -86.90 | avg50= -103.03 | sr=  0.0%
+Ep   270/500 | reward=  -73.40 | avg50=  -93.31 | sr=  0.0%
+Ep   280/500 | reward=  -70.70 | avg50=  -84.52 | sr=  0.0%
+Ep   290/500 | reward=  -69.80 | avg50=  -78.08 | sr=  0.0%
+Ep   300/500 | reward=  -61.70 | avg50=  -73.63 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   310/500 | reward=  -68.00 | avg50=  -69.57 | sr=  0.0%
+Ep   320/500 | reward=  -59.90 | avg50=  -66.54 | sr=  0.0%
+Ep   330/500 | reward=  -57.20 | avg50=  -63.82 | sr=  0.0%
+Ep   340/500 | reward=  -58.10 | avg50=  -62.33 | sr=  0.0%
+Ep   350/500 | reward=  -64.40 | avg50=  -61.29 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   360/500 | reward=  -57.20 | avg50=  -60.49 | sr=  0.0%
+Ep   370/500 | reward=  -63.50 | avg50=  -59.94 | sr=  0.0%
+Ep   380/500 | reward=  -53.60 | avg50=  -59.45 | sr=  0.0%
+Ep   390/500 | reward=  -54.50 | avg50=  -58.12 | sr=  0.0%
+Ep   400/500 | reward=  -54.50 | avg50=  -57.04 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   410/500 | reward=  -56.30 | avg50=  -56.35 | sr=  0.0%
+Ep   420/500 | reward=  -57.20 | avg50=  -55.69 | sr=  0.0%
+Ep   430/500 | reward=  -57.20 | avg50=  -55.44 | sr=  0.0%
+Ep   440/500 | reward=  -55.40 | avg50=  -55.51 | sr=  0.0%
+Ep   450/500 | reward=  -53.60 | avg50=  -55.47 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   460/500 | reward=  -52.70 | avg50=  -55.13 | sr=  0.0%
+Ep   470/500 | reward=  -50.00 | avg50=  -54.93 | sr=  0.0%
+Ep   480/500 | reward=  -52.70 | avg50=  -54.61 | sr=  0.0%
+Ep   490/500 | reward=  -54.50 | avg50=  -54.07 | sr=  0.0%
+Ep   500/500 | reward=  -54.50 | avg50=  -53.73 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Learning curve saved: results/ppo_A1_grid_gps_learning_curve_20260621_175115.png
+Path visualization saved: results/ppo_A1_grid_gps_seed0_sigma0.0_lr0.0005_g0.99_h256_rangefull_path.png
+
+Done. Results: results/ppo_A1_grid_gps_seed0_sigma0.0_lr0.0005_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/ppo_A1_grid_gps_seed0_sigma0.0_lr0.0005_g0.99_h256_rangefull_final.pt
+
+--- [PPO] lr=0.0005 seed=42 ---
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.0)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+PPO Training | grid=grid_configs/A1_grid.npy | episodes=500 | seed=42
+state_mode=gps (dim=2) | sigma=0.0 | max_range=full | start=(1, 12)
+hidden=256 | lr=0.0005 | gamma=0.99 | clip=0.2
+rollout_steps=2048 | minibatch=64 | k_epochs=4 | entropy=0.05
+----------------------------------------------------------------------
+Ep    10/500 | reward= -197.60 | avg50= -222.44 | sr=  0.0%
+Ep    20/500 | reward= -223.70 | avg50= -209.84 | sr=  0.0%
+Ep    30/500 | reward= -183.20 | avg50= -210.68 | sr=  0.0%
+Ep    40/500 | reward= -220.10 | avg50= -209.32 | sr=  0.0%
+Ep    50/500 | reward= -176.90 | avg50= -206.17 | sr=  2.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep    60/500 | reward= -202.10 | avg50= -199.12 | sr=  4.0%
+Ep    70/500 | reward= -182.30 | avg50= -197.08 | sr=  6.0%
+Ep    80/500 | reward= -167.90 | avg50= -191.74 | sr=  6.0%
+Ep    90/500 | reward= -199.40 | avg50= -188.82 | sr=  6.0%
+Ep   100/500 | reward= -215.60 | avg50= -188.35 | sr=  4.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   110/500 | reward= -211.10 | avg50= -190.54 | sr=  2.0%
+Ep   120/500 | reward= -206.60 | avg50= -192.72 | sr=  0.0%
+Ep   130/500 | reward= -184.10 | avg50= -195.19 | sr=  0.0%
+Ep   140/500 | reward= -200.30 | avg50= -192.92 | sr=  0.0%
+Ep   150/500 | reward= -192.20 | avg50= -192.58 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   160/500 | reward= -180.50 | avg50= -188.35 | sr=  0.0%
+Ep   170/500 | reward= -167.00 | avg50= -186.06 | sr=  0.0%
+Ep   180/500 | reward= -140.90 | avg50= -177.93 | sr=  0.0%
+Ep   190/500 | reward= -142.70 | avg50= -170.49 | sr=  0.0%
+Ep   200/500 | reward= -140.00 | avg50= -158.88 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   210/500 | reward= -103.10 | avg50= -147.99 | sr=  0.0%
+Ep   220/500 | reward= -106.70 | avg50= -132.24 | sr=  0.0%
+Ep   230/500 | reward=  -95.00 | avg50= -121.69 | sr=  0.0%
+Ep   240/500 | reward=  -97.70 | avg50= -113.00 | sr=  0.0%
+Ep   250/500 | reward=  -83.30 | avg50= -102.88 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   260/500 | reward=  -70.70 | avg50=  -93.81 | sr=  0.0%
+Ep   270/500 | reward=  -70.70 | avg50=  -86.65 | sr=  0.0%
+Ep   280/500 | reward=  -69.80 | avg50=  -79.81 | sr=  0.0%
+Ep   290/500 | reward=  -61.70 | avg50=  -73.29 | sr=  0.0%
+Ep   300/500 | reward=  -61.70 | avg50=  -69.53 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   310/500 | reward=  -61.70 | avg50=  -66.40 | sr=  0.0%
+Ep   320/500 | reward=  -66.20 | avg50=  -64.40 | sr=  0.0%
+Ep   330/500 | reward=  -56.30 | avg50=  -62.24 | sr=  0.0%
+Ep   340/500 | reward=  -59.00 | avg50=  -60.55 | sr=  0.0%
+Ep   350/500 | reward=  -59.00 | avg50=  -59.63 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   360/500 | reward=  -52.70 | avg50=  -58.32 | sr=  0.0%
+Ep   370/500 | reward=  -55.40 | avg50=  -56.88 | sr=  0.0%
+Ep   380/500 | reward=  -50.90 | avg50=  -56.05 | sr=  0.0%
+Ep   390/500 | reward=  -59.90 | avg50=  -55.54 | sr=  0.0%
+Ep   400/500 | reward=  -54.50 | avg50=  -55.38 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   410/500 | reward=  -50.90 | avg50=  -55.44 | sr=  0.0%
+Ep   420/500 | reward=  -56.30 | avg50=  -55.67 | sr=  0.0%
+Ep   430/500 | reward=  -56.30 | avg50=  -55.74 | sr=  0.0%
+Ep   440/500 | reward=  -53.60 | avg50=  -55.83 | sr=  0.0%
+Ep   450/500 | reward=  -55.40 | avg50=  -55.54 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Ep   460/500 | reward=  -52.70 | avg50=  -55.49 | sr=  0.0%
+Ep   470/500 | reward=  -53.60 | avg50=  -55.17 | sr=  0.0%
+Ep   480/500 | reward=  -54.50 | avg50=  -54.68 | sr=  0.0%
+Ep   490/500 | reward=  -52.70 | avg50=  -54.23 | sr=  0.0%
+Ep   500/500 | reward=  -50.00 | avg50=  -53.38 | sr=  0.0%
+  [eval] success=0.0% | mean_r=-50.00 | mean_steps=500.0
+Learning curve saved: results/ppo_A1_grid_gps_learning_curve_20260621_175231.png
+Path visualization saved: results/ppo_A1_grid_gps_seed42_sigma0.0_lr0.0005_g0.99_h256_rangefull_path.png
+
+Done. Results: results/ppo_A1_grid_gps_seed42_sigma0.0_lr0.0005_g0.99_h256_rangefull_*.{csv,npy}
+Final model:  checkpoints/ppo_A1_grid_gps_seed42_sigma0.0_lr0.0005_g0.99_h256_rangefull_final.pt

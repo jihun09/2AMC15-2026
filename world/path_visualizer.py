@@ -10,7 +10,7 @@ from PIL import Image
 from PIL import ImageDraw
 import numpy as np
 
-from world import GUI
+from gui import GUI
 
 def draw_base_image(cells: np.ndarray,
                     scalar: int,
