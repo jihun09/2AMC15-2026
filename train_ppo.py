@@ -24,6 +24,7 @@ from world.grid import Grid
 from agents.ppo_agent import PPOAgent
 from utils import compute_bfs_distances, shaped_reward
 from metrics import plot_learning_curve
+from world.path_visualizer import visualize_path
 
 
 def custom_reward(grid, agent_pos):
@@ -100,18 +101,21 @@ def evaluate_greedy(
     max_range,
     n_episodes: int,
     max_steps: int,
-) -> dict:
+) -> tuple[dict, list[tuple[int, int]]]:
     eval_env = ContinuousEnv(env, mode=state_mode, max_range=max_range)
     successes = 0
     rewards = []
     steps_list = []
+    first_ep_path = []
 
-    for _ in range(n_episodes):
+    for ep_idx in range(n_episodes):
         state = eval_env.reset()
         ep_reward = 0.0
+        path = [env.agent_pos]
         for step in range(max_steps):
             action = agent.select_action(state, training=False)
             state, reward, done, _ = eval_env.step(action)
+            path.append(env.agent_pos)
             ep_reward += reward
             if done:
                 successes += 1
@@ -120,12 +124,17 @@ def evaluate_greedy(
         else:
             steps_list.append(max_steps)
         rewards.append(ep_reward)
+        if ep_idx == 0:
+            first_ep_path = path
 
-    return {
-        "success_rate": successes / n_episodes,
-        "mean_reward": float(np.mean(rewards)),
-        "mean_steps": float(np.mean(steps_list)),
-    }
+    return (
+        {
+            "success_rate": successes / n_episodes,
+            "mean_reward": float(np.mean(rewards)),
+            "mean_steps": float(np.mean(steps_list)),
+        },
+        first_ep_path,
+    )
 
 
 def main():
@@ -225,9 +234,9 @@ def main():
                     )
 
                 if (ep + 1) % args.eval_freq == 0:
-                    stats = evaluate_greedy(agent, base_env, args.state_mode,
-                                            args.max_range, args.eval_episodes,
-                                            args.max_steps)
+                    stats, eval_path = evaluate_greedy(agent, base_env, args.state_mode,
+                                                       args.max_range, args.eval_episodes,
+                                                       args.max_steps)
                     with open(eval_csv, "a", newline="") as f:
                         csv.writer(f).writerow([ep + 1, stats["success_rate"],
                                                 stats["mean_reward"], stats["mean_steps"]])
@@ -236,6 +245,8 @@ def main():
                         f"mean_r={stats['mean_reward']:.2f} | "
                         f"mean_steps={stats['mean_steps']:.1f}"
                     )
+                    path_img = visualize_path(Grid.load_grid(args.grid).cells, eval_path)
+                    path_img.save(results_dir / f"{run_name}_path_ep{ep + 1}.png")
 
                 ep += 1
                 if ep < args.episodes:

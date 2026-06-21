@@ -169,7 +169,7 @@ def float_rgb_to_int(rgb: tuple[float, float, float]) -> tuple[int, int, int]:
 
 
 def visualize_path(grid_cells: np.ndarray,
-                   agent_path: list[list[tuple[int, int]]],
+                   agent_path: list[tuple[int, int]],
                    show_frequency: bool = False) \
         -> Image.Image:
     """Visualizes the path of (multiple) agents through the environment.
