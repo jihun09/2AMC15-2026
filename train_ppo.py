@@ -20,8 +20,10 @@ import torch
 
 from world.environment import Environment
 from world.continuous_env import ContinuousEnv
+from world.grid import Grid
 from world.path_visualizer import visualize_path
 from agents.ppo_agent import PPOAgent
+from utils import compute_bfs_distances, shaped_reward
 from metrics import plot_learning_curve
 
 
@@ -57,6 +59,8 @@ def parse_args():
                    help="State representation: gps (2), raycasting (16), or both (18).")
     p.add_argument("--start_pos", type=str, default=None,
                    help="Fixed start 'row,col' (e.g. 1,12). Default: grid start cell or random.")
+    p.add_argument("--shaping_weight", type=float, default=0.0,
+                   help="BFS potential-based reward shaping weight (0 = off).")
     # PPO hyperparameters
     p.add_argument("--lr", type=float, default=3e-4,
                    help="Adam learning rate.")
@@ -172,6 +176,8 @@ def main():
     )
     cont_env = ContinuousEnv(base_env, mode=args.state_mode, max_range=args.max_range)
 
+    dist = compute_bfs_distances(Grid.load_grid(args.grid).cells) if args.shaping_weight else None
+
     agent = PPOAgent(
         state_dim=cont_env.state_dim,
         n_actions=8,
@@ -222,7 +228,12 @@ def main():
         steps_collected = 0
         while steps_collected < args.rollout_steps and ep < args.episodes:
             action = agent.select_action(state, training=True)
+            prev_pos = base_env.agent_pos
             next_state, reward, terminated, _ = cont_env.step(action)
+
+            if args.shaping_weight and dist is not None:
+                reward = shaped_reward(reward, prev_pos, base_env.agent_pos,
+                                       terminated, dist, args.shaping_weight)
 
             ep_step += 1
             # A max_steps timeout is stored as terminal so GAE is cut at the
