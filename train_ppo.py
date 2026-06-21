@@ -6,7 +6,7 @@ gps / raycasting / both state modes, and logs the same metrics.
 Usage:
     python3 train_ppo.py --grid grid_configs/A1_grid.npy --no_gui --episodes 2000
     python3 train_ppo.py --grid grid_configs/A1_grid.npy --no_gui --state_mode raycasting
-    python3 train_ppo.py --grid grid_configs/A1_grid.npy --no_gui --state_mode both --shaping_weight 3.0
+    python3 train_ppo.py --grid grid_configs/A1_grid.npy --no_gui --state_mode both
 """
 
 import argparse
@@ -20,11 +20,9 @@ import torch
 
 from world.environment import Environment
 from world.continuous_env import ContinuousEnv
-from world.grid import Grid
-from agents.ppo_agent import PPOAgent
-from utils import compute_bfs_distances, shaped_reward
-from metrics import plot_learning_curve
 from world.path_visualizer import visualize_path
+from agents.ppo_agent import PPOAgent
+from metrics import plot_learning_curve
 
 
 def custom_reward(grid, agent_pos):
@@ -57,8 +55,8 @@ def parse_args():
                    help="Maximum raycasting range in cells. None = full raycasting.")
     p.add_argument("--state_mode", choices=["gps", "raycasting", "both"], default="gps",
                    help="State representation: gps (2), raycasting (16), or both (18).")
-    p.add_argument("--shaping_weight", type=float, default=0.0,
-                   help="BFS potential-based reward shaping weight (0 = off).")
+    p.add_argument("--start_pos", type=str, default=None,
+                   help="Fixed start 'row,col' (e.g. 1,12). Default: grid start cell or random.")
     # PPO hyperparameters
     p.add_argument("--lr", type=float, default=3e-4,
                    help="Adam learning rate.")
@@ -78,6 +76,8 @@ def parse_args():
                    help="Critic loss coefficient.")
     p.add_argument("--rollout_steps", type=int, default=2048,
                    help="Steps to collect per PPO update (spans multiple episodes).")
+    p.add_argument("--minibatch_size", type=int, default=64,
+                   help="Minibatch size for PPO gradient updates.")
     # Logging
     p.add_argument("--print_freq", type=int, default=10,
                    help="Print training stats every N episodes.")
@@ -85,6 +85,8 @@ def parse_args():
                    help="Run greedy evaluation every N episodes.")
     p.add_argument("--eval_episodes", type=int, default=10,
                    help="Number of episodes per greedy evaluation.")
+    p.add_argument("--save_freq", type=int, default=200,
+                   help="Save a checkpoint every N episodes.")
     return p.parse_args()
 
 
@@ -101,21 +103,21 @@ def evaluate_greedy(
     max_range,
     n_episodes: int,
     max_steps: int,
-) -> tuple[dict, list[tuple[int, int]]]:
+) -> dict:
+    # Snapshot the global RNG so evaluation episodes don't perturb the training
+    # RNG stream (the environment draws from random.* on every step).
+    rng_state = random.getstate()
     eval_env = ContinuousEnv(env, mode=state_mode, max_range=max_range)
     successes = 0
     rewards = []
     steps_list = []
-    first_ep_path = []
 
-    for ep_idx in range(n_episodes):
+    for _ in range(n_episodes):
         state = eval_env.reset()
         ep_reward = 0.0
-        path = [env.agent_pos]
         for step in range(max_steps):
             action = agent.select_action(state, training=False)
             state, reward, done, _ = eval_env.step(action)
-            path.append(env.agent_pos)
             ep_reward += reward
             if done:
                 successes += 1
@@ -124,17 +126,29 @@ def evaluate_greedy(
         else:
             steps_list.append(max_steps)
         rewards.append(ep_reward)
-        if ep_idx == 0:
-            first_ep_path = path
 
-    return (
-        {
-            "success_rate": successes / n_episodes,
-            "mean_reward": float(np.mean(rewards)),
-            "mean_steps": float(np.mean(steps_list)),
-        },
-        first_ep_path,
-    )
+    random.setstate(rng_state)
+    return {
+        "success_rate": successes / n_episodes,
+        "mean_reward": float(np.mean(rewards)),
+        "mean_steps": float(np.mean(steps_list)),
+    }
+
+
+def save_path_image(agent, base_env, state_mode, max_range, max_steps, save_path):
+    """Run one greedy episode and save the agent's path on the grid as a PNG."""
+    eval_env = ContinuousEnv(base_env, mode=state_mode, max_range=max_range)
+    state = eval_env.reset()
+    initial_grid = np.copy(base_env.grid)
+    path = [base_env.agent_pos]
+    for _ in range(max_steps):
+        action = agent.take_action(state)
+        state, _, done, _ = eval_env.step(action)
+        path.append(base_env.agent_pos)
+        if done:
+            break
+    visualize_path(initial_grid, path).save(str(save_path))
+    print(f"Path visualization saved: {save_path}")
 
 
 def main():
@@ -142,18 +156,21 @@ def main():
     set_seeds(args.seed)
 
     results_dir = Path("results")
+    checkpoints_dir = Path("checkpoints")
     results_dir.mkdir(exist_ok=True)
+    checkpoints_dir.mkdir(exist_ok=True)
+
+    start_pos = tuple(int(x) for x in args.start_pos.split(",")) if args.start_pos else None
 
     base_env = Environment(
         args.grid,
         no_gui=args.no_gui,
         sigma=args.sigma,
+        agent_start_pos=start_pos,
         reward_fn=custom_reward,
         random_seed=args.seed,
     )
     cont_env = ContinuousEnv(base_env, mode=args.state_mode, max_range=args.max_range)
-
-    dist = compute_bfs_distances(Grid.load_grid(args.grid).cells) if args.shaping_weight else None
 
     agent = PPOAgent(
         state_dim=cont_env.state_dim,
@@ -166,11 +183,12 @@ def main():
         gae_lambda=args.gae_lambda,
         entropy_coef=args.entropy_coef,
         value_coef=args.value_coef,
+        minibatch_size=args.minibatch_size,
         rng_seed=args.seed,
     )
 
     run_name = (
-        f"ppo_{args.state_mode}_seed{args.seed}_sigma{args.sigma}"
+        f"ppo_{args.grid.stem}_{args.state_mode}_seed{args.seed}_sigma{args.sigma}"
         f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}"
         f"_range{'full' if args.max_range is None else args.max_range}"
     )
@@ -183,9 +201,9 @@ def main():
         csv.writer(f).writerow(["episode", "success_rate", "mean_reward", "mean_steps"])
 
     print(f"PPO Training | grid={args.grid} | episodes={args.episodes} | seed={args.seed}")
-    print(f"state_mode={args.state_mode} (dim={cont_env.state_dim}) | sigma={args.sigma} | max_range={'full' if args.max_range is None else args.max_range}")
+    print(f"state_mode={args.state_mode} (dim={cont_env.state_dim}) | sigma={args.sigma} | max_range={'full' if args.max_range is None else args.max_range} | start={start_pos if start_pos else 'auto'}")
     print(f"hidden={args.hidden_size} | lr={args.lr} | gamma={args.gamma} | clip={args.clip_eps}")
-    print(f"rollout_steps={args.rollout_steps} | k_epochs={args.k_epochs} | entropy={args.entropy_coef}")
+    print(f"rollout_steps={args.rollout_steps} | minibatch={args.minibatch_size} | k_epochs={args.k_epochs} | entropy={args.entropy_coef}")
     print("-" * 70)
 
     episode_rewards: list[float] = []
@@ -206,18 +224,16 @@ def main():
             action = agent.select_action(state, training=True)
             next_state, reward, terminated, _ = cont_env.step(action)
 
-            if args.shaping_weight and dist is not None:
-                prev_pos = base_env.agent_pos
-                reward = shaped_reward(reward, prev_pos, base_env.agent_pos,
-                                       terminated, dist, args.shaping_weight)
-
-            agent.store_reward(reward, terminated)
-            ep_return += reward
             ep_step += 1
+            # A max_steps timeout is stored as terminal so GAE is cut at the
+            # episode boundary and advantages do not bleed across episodes.
+            done = terminated or ep_step >= args.max_steps
+            agent.store_reward(reward, done)
+            ep_return += reward
             steps_collected += 1
             state = next_state
 
-            if terminated or ep_step >= args.max_steps:
+            if done:
                 episode_rewards.append(ep_return)
                 episode_successes.append(int(terminated))
 
@@ -234,9 +250,9 @@ def main():
                     )
 
                 if (ep + 1) % args.eval_freq == 0:
-                    stats, eval_path = evaluate_greedy(agent, base_env, args.state_mode,
-                                                       args.max_range, args.eval_episodes,
-                                                       args.max_steps)
+                    stats = evaluate_greedy(agent, base_env, args.state_mode,
+                                            args.max_range, args.eval_episodes,
+                                            args.max_steps)
                     with open(eval_csv, "a", newline="") as f:
                         csv.writer(f).writerow([ep + 1, stats["success_rate"],
                                                 stats["mean_reward"], stats["mean_steps"]])
@@ -245,8 +261,9 @@ def main():
                         f"mean_r={stats['mean_reward']:.2f} | "
                         f"mean_steps={stats['mean_steps']:.1f}"
                     )
-                    path_img = visualize_path(Grid.load_grid(args.grid).cells, eval_path)
-                    path_img.save(results_dir / f"{run_name}_path_ep{ep + 1}.png")
+
+                if (ep + 1) % args.save_freq == 0:
+                    agent.save(str(checkpoints_dir / f"{run_name}_ep{ep + 1}.pt"))
 
                 ep += 1
                 if ep < args.episodes:
@@ -258,6 +275,10 @@ def main():
         last_value = 0.0 if terminated else agent.state_value(state)
         agent.learn(last_value=last_value)
 
+    agent.save(str(checkpoints_dir / f"{run_name}_final.pt"))
+    np.save(results_dir / f"{run_name}_rewards.npy", np.array(episode_rewards))
+    np.save(results_dir / f"{run_name}_successes.npy", np.array(episode_successes))
+
     plot_learning_curve(
         episode_rewards, episode_successes,
         title=(f"PPO | {args.grid.stem} | {args.state_mode} | "
@@ -268,7 +289,11 @@ def main():
         ),
     )
 
-    print(f"\nDone. Results saved to {results_dir}/")
+    save_path_image(agent, base_env, args.state_mode, args.max_range,
+                    args.max_steps, results_dir / f"{run_name}_path.png")
+
+    print(f"\nDone. Results: {results_dir}/{run_name}_*.{{csv,npy}}")
+    print(f"Final model:  {checkpoints_dir}/{run_name}_final.pt")
 
 
 if __name__ == "__main__":

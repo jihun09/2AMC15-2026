@@ -15,6 +15,7 @@ import torch
 
 from world.environment import Environment
 from world.continuous_env import ContinuousEnv
+from world.path_visualizer import visualize_path
 from agents.dqn import DQNAgent
 
 
@@ -23,7 +24,7 @@ def custom_reward(grid, agent_pos):
         case 0:
             return -0.1
         case 1 | 2:
-            return -1.0
+            return -0.5
         case 3:
             return 10.0
         case _:
@@ -42,12 +43,14 @@ def parse_args():
                    help="Disable pygame rendering.")
     p.add_argument("--seed", type=int, default=42,
                    help="Random seed for reproducibility.")
-    p.add_argument("--sigma", type=float, default=0.1,
+    p.add_argument("--sigma", type=float, default=0,
                    help="Environment stochasticity (probability of random action).")
     p.add_argument("--max_range", type=int, default=None,
                    help="Maximum raycasting range in cells. None = full raycasting.")
     p.add_argument("--state_mode", choices=["gps", "raycasting", "both"], default="gps",
                    help="State representation: gps (2), raycasting (16), or both (18).")
+    p.add_argument("--start_pos", type=str, default="1,12",
+                   help="Fixed start 'row,col' (e.g. 1,12). Default: grid start cell or random.")
     # DQN hyperparameters
     p.add_argument("--lr", type=float, default=1e-3,
                    help="Adam learning rate.")
@@ -97,6 +100,9 @@ def evaluate_greedy(
     n_episodes: int,
     max_steps: int,
 ) -> dict:
+    # Snapshot the global RNG so evaluation episodes don't perturb the training
+    # RNG stream (the environment draws from random.* on every step).
+    rng_state = random.getstate()
     agent.training_mode = False
     successes = 0
     rewards = []
@@ -119,11 +125,30 @@ def evaluate_greedy(
         rewards.append(ep_reward)
 
     agent.training_mode = True
+    random.setstate(rng_state)
     return {
         "success_rate": successes / n_episodes,
         "mean_reward": float(np.mean(rewards)),
         "mean_steps": float(np.mean(steps_list)),
     }
+
+
+def save_path_image(agent, base_env, state_mode, max_range, max_steps, save_path):
+    """Run one greedy episode and save the agent's path on the grid as a PNG."""
+    eval_env = ContinuousEnv(base_env, mode=state_mode, max_range=max_range)
+    agent.training_mode = False
+    state = eval_env.reset()
+    initial_grid = np.copy(base_env.grid)
+    path = [base_env.agent_pos]
+    for _ in range(max_steps):
+        action = agent.take_action(state)
+        state, _, done, _ = eval_env.step(action)
+        path.append(base_env.agent_pos)
+        if done:
+            break
+    agent.training_mode = True
+    visualize_path(initial_grid, path).save(str(save_path))
+    print(f"Path visualization saved: {save_path}")
 
 
 def main():
@@ -135,10 +160,13 @@ def main():
     results_dir.mkdir(exist_ok=True)
     checkpoints_dir.mkdir(exist_ok=True)
 
+    start_pos = tuple(int(x) for x in args.start_pos.split(",")) if args.start_pos else None
+
     base_env = Environment(
         args.grid,
         no_gui=args.no_gui,
         sigma=args.sigma,
+        agent_start_pos=start_pos,
         reward_fn=custom_reward,
         random_seed=args.seed,
     )
@@ -160,7 +188,7 @@ def main():
     )
 
     run_name = (
-        f"dqn_{args.state_mode}_seed{args.seed}_sigma{args.sigma}"
+        f"dqn_{args.grid.stem}_{args.state_mode}_seed{args.seed}_sigma{args.sigma}"
         f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}"
         f"_range{'full' if args.max_range is None else args.max_range}"
     )
@@ -173,9 +201,9 @@ def main():
         csv.writer(f).writerow(["episode", "success_rate", "mean_reward", "mean_steps"])
 
     print(f"DQN Training | grid={args.grid} | episodes={args.episodes} | seed={args.seed}")
-    print(f"state_mode={args.state_mode} (dim={cont_env.state_dim}) | sigma={args.sigma} | max_range={'full' if args.max_range is None else args.max_range}")
+    print(f"state_mode={args.state_mode} (dim={cont_env.state_dim}) | sigma={args.sigma} | max_range={'full' if args.max_range is None else args.max_range} | start={start_pos if start_pos else 'auto'}")
     print(f"device={agent.device} | hidden={args.hidden_size} | lr={args.lr} | gamma={args.gamma}")
-    print(f"eps: {args.epsilon} → {args.epsilon_min} (decay={args.epsilon_decay})")
+    print(f"eps: {args.epsilon} -> {args.epsilon_min} (decay={args.epsilon_decay})")
     print(f"buffer={args.buffer_capacity} | batch={args.batch_size} | warmup={args.warmup} | target_C={args.target_update_freq}")
     print("-" * 70)
 
@@ -234,6 +262,9 @@ def main():
 
     np.save(results_dir / f"{run_name}_rewards.npy", np.array(episode_rewards))
     np.save(results_dir / f"{run_name}_successes.npy", np.array(episode_successes))
+
+    save_path_image(agent, base_env, args.state_mode, args.max_range,
+                    args.max_steps, results_dir / f"{run_name}_path.png")
 
     print(f"\nDone. Results: {results_dir}/{run_name}_*.{{csv,npy}}")
     print(f"Final model:  {checkpoints_dir}/{run_name}_final.pt")

@@ -61,6 +61,7 @@ class PPOAgent(BaseAgent):
         entropy_coef: float = 0.05,
         value_coef: float = 0.5,
         max_grad_norm: float = 0.5,
+        minibatch_size: int = 64,
         rng_seed: int | None = None,
     ):
         super().__init__()
@@ -72,6 +73,7 @@ class PPOAgent(BaseAgent):
         self.entropy_coef = entropy_coef
         self.value_coef = value_coef
         self.max_grad_norm = max_grad_norm
+        self.minibatch_size = minibatch_size
 
         if rng_seed is not None:
             torch.manual_seed(rng_seed)
@@ -179,27 +181,33 @@ class PPOAgent(BaseAgent):
         actions_t = torch.tensor(self._buf_actions, dtype=torch.long)
         old_lp_t = torch.tensor(self._buf_log_probs, dtype=torch.float32)
 
+        n = adv_t.shape[0]
         actor_loss_val = critic_loss_val = entropy_val = 0.0
 
+        # K epochs of SGD over shuffled minibatches (canonical PPO).
         for _ in range(self.k_epochs):
-            log_probs, values, entropy = self.policy.evaluate(states_t, actions_t)
+            perm = torch.randperm(n)
+            for start in range(0, n, self.minibatch_size):
+                mb = perm[start:start + self.minibatch_size]
+                log_probs, values, entropy = self.policy.evaluate(
+                    states_t[mb], actions_t[mb])
 
-            ratios = torch.exp(log_probs - old_lp_t.detach())
-            surr1 = ratios * adv_t
-            surr2 = torch.clamp(ratios, 1 - self.clip_eps, 1 + self.clip_eps) * adv_t
-            actor_loss = -torch.min(surr1, surr2).mean()
-            critic_loss = nn.functional.mse_loss(values, ret_t.detach())
-            entropy_loss = -entropy.mean()
+                ratios = torch.exp(log_probs - old_lp_t[mb])
+                surr1 = ratios * adv_t[mb]
+                surr2 = torch.clamp(ratios, 1 - self.clip_eps, 1 + self.clip_eps) * adv_t[mb]
+                actor_loss = -torch.min(surr1, surr2).mean()
+                critic_loss = nn.functional.mse_loss(values, ret_t[mb])
+                entropy_loss = -entropy.mean()
 
-            loss = actor_loss + self.value_coef * critic_loss + self.entropy_coef * entropy_loss
-            self.optimizer.zero_grad()
-            loss.backward()
-            nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-            self.optimizer.step()
+                loss = actor_loss + self.value_coef * critic_loss + self.entropy_coef * entropy_loss
+                self.optimizer.zero_grad()
+                loss.backward()
+                nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+                self.optimizer.step()
 
-            actor_loss_val = actor_loss.item()
-            critic_loss_val = critic_loss.item()
-            entropy_val = entropy.mean().item()
+                actor_loss_val = actor_loss.item()
+                critic_loss_val = critic_loss.item()
+                entropy_val = entropy.mean().item()
 
         self._reset_buffer()
         return {
@@ -207,3 +215,18 @@ class PPOAgent(BaseAgent):
             "critic_loss": critic_loss_val,
             "entropy": entropy_val,
         }
+
+    # ------------------------------------------------------------------
+    # Checkpointing
+    # ------------------------------------------------------------------
+
+    def save(self, path: str):
+        torch.save({
+            "policy": self.policy.state_dict(),
+            "optimizer": self.optimizer.state_dict(),
+        }, path)
+
+    def load(self, path: str):
+        ckpt = torch.load(path, map_location="cpu", weights_only=True)
+        self.policy.load_state_dict(ckpt["policy"])
+        self.optimizer.load_state_dict(ckpt["optimizer"])

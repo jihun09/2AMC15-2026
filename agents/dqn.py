@@ -99,7 +99,7 @@ class DQNAgent(BaseAgent):
         self.replay_buffer.push(state, action, reward, next_state, float(done))
 
     def train_step(self) -> float | None:
-        if len(self.replay_buffer) < self.warmup:
+        if len(self.replay_buffer) < max(self.warmup, self.batch_size):
             return None
 
         states, actions, rewards, next_states, dones = self.replay_buffer.sample(self.batch_size)
