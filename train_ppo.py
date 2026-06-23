@@ -20,10 +20,8 @@ import torch
 
 from world.environment import Environment
 from world.continuous_env import ContinuousEnv
-from world.grid import Grid
 from world.path_visualizer import visualize_path
 from agents.ppo_agent import PPOAgent
-from utils import compute_bfs_distances, shaped_reward
 from metrics import plot_learning_curve
 
 
@@ -59,8 +57,6 @@ def parse_args():
                    help="State representation: gps (2), raycasting (16), or both (18).")
     p.add_argument("--start_pos", type=str, default=None,
                    help="Fixed start 'row,col' (e.g. 1,12). Default: grid start cell or random.")
-    p.add_argument("--shaping_weight", type=float, default=0.0,
-                   help="BFS potential-based reward shaping weight (0 = off).")
     # PPO hyperparameters
     p.add_argument("--lr", type=float, default=3e-4,
                    help="Adam learning rate.")
@@ -176,8 +172,6 @@ def main():
     )
     cont_env = ContinuousEnv(base_env, mode=args.state_mode, max_range=args.max_range)
 
-    dist = compute_bfs_distances(Grid.load_grid(args.grid).cells) if args.shaping_weight else None
-
     agent = PPOAgent(
         state_dim=cont_env.state_dim,
         n_actions=8,
@@ -195,7 +189,7 @@ def main():
 
     run_name = (
         f"ppo_{args.grid.stem}_{args.state_mode}_seed{args.seed}_sigma{args.sigma}"
-        f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}"
+        f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}_episodes{args.episodes}_max_steps{args.max_steps}"
         f"_range{'full' if args.max_range is None else args.max_range}"
     )
     train_csv = results_dir / f"{run_name}_training.csv"
@@ -206,7 +200,7 @@ def main():
     with open(eval_csv, "w", newline="") as f:
         csv.writer(f).writerow(["episode", "success_rate", "mean_reward", "mean_steps"])
 
-    print(f"PPO Training | grid={args.grid} | episodes={args.episodes} | seed={args.seed}")
+    print(f"PPO Training | grid={args.grid} | episodes={args.episodes} | seed={args.seed} | max_steps={args.max_steps}")
     print(f"state_mode={args.state_mode} (dim={cont_env.state_dim}) | sigma={args.sigma} | max_range={'full' if args.max_range is None else args.max_range} | start={start_pos if start_pos else 'auto'}")
     print(f"hidden={args.hidden_size} | lr={args.lr} | gamma={args.gamma} | clip={args.clip_eps}")
     print(f"rollout_steps={args.rollout_steps} | minibatch={args.minibatch_size} | k_epochs={args.k_epochs} | entropy={args.entropy_coef}")
@@ -228,12 +222,7 @@ def main():
         steps_collected = 0
         while steps_collected < args.rollout_steps and ep < args.episodes:
             action = agent.select_action(state, training=True)
-            prev_pos = base_env.agent_pos
             next_state, reward, terminated, _ = cont_env.step(action)
-
-            if args.shaping_weight and dist is not None:
-                reward = shaped_reward(reward, prev_pos, base_env.agent_pos,
-                                       terminated, dist, args.shaping_weight)
 
             ep_step += 1
             # A max_steps timeout is stored as terminal so GAE is cut at the

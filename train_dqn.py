@@ -189,7 +189,7 @@ def main():
 
     run_name = (
         f"dqn_{args.grid.stem}_{args.state_mode}_seed{args.seed}_sigma{args.sigma}"
-        f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}"
+        f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}_episodes{args.episodes}_max_steps{args.max_steps}"
         f"_range{'full' if args.max_range is None else args.max_range}"
     )
     train_csv = results_dir / f"{run_name}_training.csv"
