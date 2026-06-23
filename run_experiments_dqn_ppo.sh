@@ -25,16 +25,16 @@
 set -e
 
 GRID="grid_configs/A1_grid.npy"
-EPISODES=(500 1000 2000 3000)
-MAX_STEPS=(500 1000 2000 3000)
+EPISODES=(500 2000)
+MAX_STEPS=(500 2000)
 STATE_MODE=gps
 SIGMAS=(0 0.1)
 START_POS="1,12"
-SEEDS=(0 42 123)
+SEEDS=(0 42)
 GAMMA=0.99
 HIDDEN_SIZE=256
 LR_DQN=(0.0001 0.0005 0.001)
-LR_PPO=(0.0001 0.0003 0.0005 0.001)
+LR_PPO=(0.0003 0.0005 0.001)
 
 RESULTS_FILE="results/dqn_ppo_sweep_results.txt"
 mkdir -p results
@@ -58,36 +58,14 @@ run_ppo() {
     python3 train_ppo.py "$@" 2>&1 | tee -a "$RESULTS_FILE"
 }
 
-# DQN
-
-echo ">>> DQN runs"
-
-for LR in "${LR_DQN[@]}"; do
-    for SEED in "${SEEDS[@]}"; do
-        for SIGMA in "${SIGMAS[@]}"; do
-            for episodes in "${EPISODES[@]}"; do
-                for max_steps in "${MAX_STEPS[@]}"; do                 
-                    run_dqn "lr=$LR seed=$SEED sigma=$SIGMA" \
-                        --grid "$GRID" --no_gui \
-                        --episodes "$episodes" --max_steps "$max_steps" \
-                        --state_mode "$STATE_MODE" --sigma "$SIGMA" \
-                        --start_pos "$START_POS" --seed "$SEED" \
-                        --lr "$LR" --gamma "$GAMMA" --hidden_size "$HIDDEN_SIZE" \
-                        --epsilon 1 --epsilon_decay 0.995 --epsilon_min 0.1 \
-                        --buffer_capacity 50000 --batch_size 64 \
-                        --warmup 1000 --target_update_freq 100
-                done
-            done
-        done
-    done
-done
 
 # PPO
 
 echo ">>> PPO runs"
 
-for LR in "${LR_PPO[@]}"; do
-    for SEED in "${SEEDS[@]}"; do
+
+for SEED in "${SEEDS[@]}"; do
+    for LR in "${LR_PPO[@]}"; do
         for SIGMA in "${SIGMAS[@]}"; do
             for episodes in "${EPISODES[@]}"; do
                 for max_steps in "${MAX_STEPS[@]}"; do
