@@ -145,3 +145,39 @@ The `Grid` class is the the actual representation of the world on which the agen
 The Graphical User Interface provides a way for you to actually see what the RL agent is doing.
 While performant and written using PyGame, it is still about 1300x slower than not running a GUI.
 Because of this, we recommend using it only while testing/debugging and not while training.
+
+## Assignment 2: DQN vs PPO
+
+Deep-RL agents on the continuous-state task, compared on two metrics (mean ± std over seeds):
+
+- **success rate** — fraction of eval episodes reaching the target within `max_steps`
+- **path efficiency** — BFS-optimal steps / actual steps (over successful episodes only)
+
+### Reproduce all results
+
+```bash
+pip install -r requirements.txt
+bash run_experiments.sh
+```
+
+Runs the full matrix (DQN lr sweep + robustness, PPO at 500 and 3000 episodes, 10 seeds,
+σ ∈ {0, 0.1}) in parallel, writes `results/a2_summary_metrics.csv`, and prints the
+aggregated table. ~30 min on a 16-core CPU.
+
+### Single run
+
+```bash
+python train_dqn.py --grid grid_configs/A1_grid.npy --no_gui --episodes 500  --state_mode gps --lr 5e-4 --seed 0 --sigma 0.1
+python train_ppo.py --grid grid_configs/A1_grid.npy --no_gui --episodes 3000 --state_mode gps --lr 5e-4 --seed 0 --sigma 0.1
+```
+
+Each run appends one row to `results/a2_summary_metrics.csv` (override with `--summary_csv`).
+Re-print the aggregated table any time with `python aggregate_metrics.py`.
+
+| File | Purpose |
+|---|---|
+| `train_dqn.py`, `train_ppo.py` | Train one config; append its metrics row |
+| `eval_metrics.py` | Greedy-policy evaluation (success rate + path efficiency) |
+| `aggregate_metrics.py` | Group the CSV by config; print mean ± std over seeds |
+| `merge_parts.py` | Fold parallel per-run CSVs into the main CSV (used by the runner) |
+| `run_experiments.sh` | Reproduce everything |

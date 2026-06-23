@@ -1,6 +1,4 @@
-"""Aggregate results/a2_summary_metrics.csv across seeds.
-Run:  venv/Scripts/python.exe aggregate_metrics.py
-"""
+"""Aggregate results/a2_summary_metrics.csv over seeds, one row per config."""
 import csv
 from collections import defaultdict
 from pathlib import Path
@@ -8,6 +6,7 @@ from pathlib import Path
 import numpy as np
 
 PATH = Path("results/a2_summary_metrics.csv")
+CONFIG = ["algo", "state_mode", "sigma", "lr", "episodes"]
 
 
 def main():
@@ -17,29 +16,26 @@ def main():
     rows = list(csv.DictReader(open(PATH)))
     groups = defaultdict(list)
     for r in rows:
-        groups[(r["algo"], r["state_mode"], r["sigma"])].append(r)
+        groups[tuple(r[k] for k in CONFIG)].append(r)
 
-    print(f"\nAggregated over seeds  (source: {PATH}, {len(rows)} runs)\n")
-    hdr = f"{'algo':4} {'state':4} {'sigma':5} {'n':2} | {'success_rate':22} | {'path_efficiency':22} | per-seed success"
+    print(f"\nAggregated over seeds  ({PATH}, {len(rows)} runs)\n")
+    hdr = (f"{'algo':4} {'state':4} {'sigma':5} {'lr':8} {'eps':5} {'n':2} | "
+           f"{'success_rate':22} | {'path_efficiency':22} | per-seed success")
     print(hdr)
     print("-" * len(hdr))
     for key in sorted(groups):
         g = sorted(groups[key], key=lambda x: int(x["seed"]))
         sr = np.array([float(x["success_rate"]) for x in g])
-        # success rate: over ALL seeds; path efficiency: conditional, over the
-        # seeds that actually solved it (success_rate > 0) — a failed seed has
-        # no path, so averaging its 0 in would conflate the two metrics.
+        # path efficiency only over seeds that actually solved it (success > 0);
+        # a failed seed has no path, so its 0 would conflate the two metrics.
         pe = np.array([float(x["mean_path_eff"]) for x in g if float(x["success_rate"]) > 0])
         n = len(g)
         sr_s = f"{sr.mean():.3f} +/- {sr.std(ddof=1 if n > 1 else 0):.3f}"
-        if pe.size:
-            pe_s = f"{pe.mean():.3f} +/- {pe.std(ddof=1 if pe.size > 1 else 0):.3f} (n={pe.size})"
-        else:
-            pe_s = "n/a (no successes)"
+        pe_s = (f"{pe.mean():.3f} +/- {pe.std(ddof=1 if pe.size > 1 else 0):.3f} (n={pe.size})"
+                if pe.size else "n/a (no successes)")
+        algo, state, sigma, lr, eps = key
         per_seed = ", ".join(f"s{x['seed']}={float(x['success_rate']):.2f}" for x in g)
-        print(f"{key[0]:4} {key[1]:4} {key[2]:5} {n:2} | {sr_s:22} | {pe_s:26} | {per_seed}")
-    print("\nNote: success over ALL seeds; path_eff over successful seeds only.")
-    print("ddof=1 for n>1. 2 seeds -> std indicative only.")
+        print(f"{algo:4} {state:4} {sigma:5} {lr:8} {eps:5} {n:2} | {sr_s:22} | {pe_s:26} | {per_seed}")
 
 
 if __name__ == "__main__":

@@ -13,8 +13,7 @@ def evaluate_policy(agent, base_env, state_mode, max_range, start_pos,
                     bfs_dist=None) -> dict:
     
     start_pos = tuple(int(x) for x in start_pos)
-    # Reload a pristine grid before BFS: base_env.grid may have been mutated
-    # mid-rollout (e.g. the target consumed on reach), which would make BFS=inf.
+    # Reset to a pristine grid first: a consumed target would make BFS infinite.
     base_env.reset(agent_start_pos=start_pos)
     if bfs_dist is None:
         bfs_dist = compute_bfs_distances(base_env.grid, diagonal=True)

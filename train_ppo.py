@@ -31,7 +31,7 @@ def custom_reward(grid, agent_pos):
         case 0:
             return -0.1
         case 1 | 2:
-            return -1.0
+            return -0.5
         case 3:
             return 10.0
         case _:
@@ -88,6 +88,8 @@ def parse_args():
                    help="Number of episodes per greedy evaluation.")
     p.add_argument("--save_freq", type=int, default=200,
                    help="Save a checkpoint every N episodes.")
+    p.add_argument("--summary_csv", type=str, default=None,
+                   help="Where to append the metrics row (default: results/a2_summary_metrics.csv).")
     return p.parse_args()
 
 
@@ -190,7 +192,7 @@ def main():
 
     run_name = (
         f"ppo_{args.grid.stem}_{args.state_mode}_seed{args.seed}_sigma{args.sigma}"
-        f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}"
+        f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}_e{args.episodes}"
         f"_range{'full' if args.max_range is None else args.max_range}"
     )
     train_csv = results_dir / f"{run_name}_training.csv"
@@ -307,7 +309,7 @@ def main():
           f"success_rate={m['success_rate']:.3f} | "
           f"path_eff={m['mean_path_eff']:.3f} ± {m['std_path_eff']:.3f} | "
           f"steps={m['mean_steps_success']:.1f} (opt={m['optimal_steps']:.0f})")
-    append_summary(results_dir / "a2_summary_metrics.csv", {
+    append_summary(Path(args.summary_csv) if args.summary_csv else results_dir / "a2_summary_metrics.csv", {
         "algo": "PPO", "grid": args.grid.stem, "state_mode": args.state_mode,
         "seed": args.seed, "sigma": args.sigma, "lr": args.lr, "gamma": args.gamma,
         "hidden_size": args.hidden_size, "epsilon_min": "", "epsilon_decay": "",
