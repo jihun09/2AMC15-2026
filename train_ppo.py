@@ -23,6 +23,7 @@ from world.continuous_env import ContinuousEnv
 from world.path_visualizer import visualize_path
 from agents.ppo_agent import PPOAgent
 from metrics import plot_learning_curve
+from eval_metrics import evaluate_policy, append_summary
 
 
 def custom_reward(grid, agent_pos):
@@ -291,6 +292,28 @@ def main():
 
     save_path_image(agent, base_env, args.state_mode, args.max_range,
                     args.max_steps, results_dir / f"{run_name}_path.png")
+
+    # Final evaluation: the two headline metrics (success rate + path efficiency)
+    if start_pos is None:
+        base_env.reset()
+        eff_start = base_env.agent_pos
+    else:
+        eff_start = start_pos
+    # BFS is computed inside evaluate_policy from a freshly reset (pristine) grid.
+    n_eval = 100
+    m = evaluate_policy(agent, base_env, args.state_mode, args.max_range,
+                        eff_start, n_episodes=n_eval, max_steps=args.max_steps)
+    print(f"\n[final eval | {n_eval} eps] "
+          f"success_rate={m['success_rate']:.3f} | "
+          f"path_eff={m['mean_path_eff']:.3f} ± {m['std_path_eff']:.3f} | "
+          f"steps={m['mean_steps_success']:.1f} (opt={m['optimal_steps']:.0f})")
+    append_summary(results_dir / "a2_summary_metrics.csv", {
+        "algo": "PPO", "grid": args.grid.stem, "state_mode": args.state_mode,
+        "seed": args.seed, "sigma": args.sigma, "lr": args.lr, "gamma": args.gamma,
+        "hidden_size": args.hidden_size, "epsilon_min": "", "epsilon_decay": "",
+        "episodes": args.episodes, "max_steps": args.max_steps,
+        "eval_episodes": n_eval, **m,
+    })
 
     print(f"\nDone. Results: {results_dir}/{run_name}_*.{{csv,npy}}")
     print(f"Final model:  {checkpoints_dir}/{run_name}_final.pt")

@@ -17,6 +17,7 @@ from world.environment import Environment
 from world.continuous_env import ContinuousEnv
 from world.path_visualizer import visualize_path
 from agents.dqn import DQNAgent
+from eval_metrics import evaluate_policy, append_summary
 
 
 def custom_reward(grid, agent_pos):
@@ -265,6 +266,22 @@ def main():
 
     save_path_image(agent, base_env, args.state_mode, args.max_range,
                     args.max_steps, results_dir / f"{run_name}_path.png")
+
+
+    n_eval = 100
+    m = evaluate_policy(agent, base_env, args.state_mode, args.max_range,
+                        start_pos, n_episodes=n_eval, max_steps=args.max_steps)
+    print(f"\n[final eval | {n_eval} eps] "
+          f"success_rate={m['success_rate']:.3f} | "
+          f"path_eff={m['mean_path_eff']:.3f} ± {m['std_path_eff']:.3f} | "
+          f"steps={m['mean_steps_success']:.1f} (opt={m['optimal_steps']:.0f})")
+    append_summary(results_dir / "a2_summary_metrics.csv", {
+        "algo": "DQN", "grid": args.grid.stem, "state_mode": args.state_mode,
+        "seed": args.seed, "sigma": args.sigma, "lr": args.lr, "gamma": args.gamma,
+        "hidden_size": args.hidden_size, "epsilon_min": args.epsilon_min,
+        "epsilon_decay": args.epsilon_decay, "episodes": args.episodes,
+        "max_steps": args.max_steps, "eval_episodes": n_eval, **m,
+    })
 
     print(f"\nDone. Results: {results_dir}/{run_name}_*.{{csv,npy}}")
     print(f"Final model:  {checkpoints_dir}/{run_name}_final.pt")
