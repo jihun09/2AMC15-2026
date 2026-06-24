@@ -23,6 +23,7 @@ from world.continuous_env import ContinuousEnv
 from world.path_visualizer import visualize_path
 from agents.ppo_agent import PPOAgent
 from metrics import plot_learning_curve
+from eval_metrics import evaluate_policy, append_summary
 
 
 def custom_reward(grid, agent_pos):
@@ -30,7 +31,7 @@ def custom_reward(grid, agent_pos):
         case 0:
             return -0.1
         case 1 | 2:
-            return -1.0
+            return -0.5
         case 3:
             return 10.0
         case _:
@@ -54,7 +55,7 @@ def parse_args():
     p.add_argument("--max_range", type=int, default=None,
                    help="Maximum raycasting range in cells. None = full raycasting.")
     p.add_argument("--state_mode", choices=["gps", "raycasting", "both"], default="gps",
-                   help="State representation: gps (2), raycasting (16), or both (18).")
+                   help="State representation: gps (2), raycasting (8), or both (10).")
     p.add_argument("--start_pos", type=str, default=None,
                    help="Fixed start 'row,col' (e.g. 1,12). Default: grid start cell or random.")
     # PPO hyperparameters
@@ -87,6 +88,8 @@ def parse_args():
                    help="Number of episodes per greedy evaluation.")
     p.add_argument("--save_freq", type=int, default=200,
                    help="Save a checkpoint every N episodes.")
+    p.add_argument("--summary_csv", type=str, default=None,
+                   help="Where to append the metrics row (default: results/a2_summary_metrics.csv).")
     return p.parse_args()
 
 
@@ -189,7 +192,7 @@ def main():
 
     run_name = (
         f"ppo_{args.grid.stem}_{args.state_mode}_seed{args.seed}_sigma{args.sigma}"
-        f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}_episodes{args.episodes}_max_steps{args.max_steps}"
+        f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}_e{args.episodes}"
         f"_range{'full' if args.max_range is None else args.max_range}"
     )
     train_csv = results_dir / f"{run_name}_training.csv"
@@ -291,6 +294,28 @@ def main():
 
     save_path_image(agent, base_env, args.state_mode, args.max_range,
                     args.max_steps, results_dir / f"{run_name}_path.png")
+
+    # Final evaluation: the two headline metrics (success rate + path efficiency)
+    if start_pos is None:
+        base_env.reset()
+        eff_start = base_env.agent_pos
+    else:
+        eff_start = start_pos
+    # BFS is computed inside evaluate_policy from a freshly reset (pristine) grid.
+    n_eval = 100
+    m = evaluate_policy(agent, base_env, args.state_mode, args.max_range,
+                        eff_start, n_episodes=n_eval, max_steps=args.max_steps)
+    print(f"\n[final eval | {n_eval} eps] "
+          f"success_rate={m['success_rate']:.3f} | "
+          f"path_eff={m['mean_path_eff']:.3f} ± {m['std_path_eff']:.3f} | "
+          f"steps={m['mean_steps_success']:.1f} (opt={m['optimal_steps']:.0f})")
+    append_summary(Path(args.summary_csv) if args.summary_csv else results_dir / "a2_summary_metrics.csv", {
+        "algo": "PPO", "grid": args.grid.stem, "state_mode": args.state_mode,
+        "seed": args.seed, "sigma": args.sigma, "lr": args.lr, "gamma": args.gamma,
+        "hidden_size": args.hidden_size, "epsilon_min": "", "epsilon_decay": "",
+        "episodes": args.episodes, "max_steps": args.max_steps,
+        "eval_episodes": n_eval, **m,
+    })
 
     print(f"\nDone. Results: {results_dir}/{run_name}_*.{{csv,npy}}")
     print(f"Final model:  {checkpoints_dir}/{run_name}_final.pt")
