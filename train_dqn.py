@@ -49,7 +49,7 @@ def parse_args():
     p.add_argument("--max_range", type=int, default=None,
                    help="Maximum raycasting range in cells. None = full raycasting.")
     p.add_argument("--state_mode", choices=["gps", "raycasting", "both"], default="gps",
-                   help="State representation: gps (2), raycasting (16), or both (18).")
+                   help="State representation: gps (2), raycasting (8), or both (10).")
     p.add_argument("--start_pos", type=str, default="1,12",
                    help="Fixed start 'row,col' (e.g. 1,12). Default: grid start cell or random.")
     # DQN hyperparameters

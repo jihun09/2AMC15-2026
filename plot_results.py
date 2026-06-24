@@ -7,6 +7,7 @@ read from the per-seed results/*_rewards.npy and *_successes.npy arrays.
 Usage:
     python plot_results.py            # writes results/fig1_convergence.png and saves also the single panels as separate assets
 """
+import argparse
 import glob
 import os
 import re
@@ -28,6 +29,9 @@ PPO_SMOOTH = 50
 DQN_COLOR = "#1f77b4"
 PPO_COLOR = "#d62728"
 
+# How each state mode is labelled in titles.
+MODE_LABEL = {"gps": "GPS", "raycasting": "raycasting", "both": "GPS+raycasting"}
+
 
 def smooth(x: np.ndarray, w: int) -> np.ndarray:
     """Trailing moving average, length-preserving (front padded with the
@@ -41,10 +45,13 @@ def smooth(x: np.ndarray, w: int) -> np.ndarray:
     return np.concatenate([head, body])
 
 
-def load_runs(algo, sigma, lr, hidden=None):
+def load_runs(algo, state_mode, sigma, lr, hidden=None):
     """Stack per-seed reward and success arrays for one config. Returns
-    (rewards[n_seeds, T], successes[n_seeds, T], seeds[list])."""
-    pat = f"{algo}_*_seed*_sigma{sigma}_lr{lr}_*_rewards.npy"
+    (rewards[n_seeds, T], successes[n_seeds, T], seeds[list]).
+
+    state_mode ('gps' | 'raycasting' | 'both') is matched literally in the
+    filename, so only runs of that representation are loaded."""
+    pat = f"{algo}_*_{state_mode}_seed*_sigma{sigma}_lr{lr}_*_rewards.npy"
     rewards, succ, seeds = [], [], []
     for rf in sorted(glob.glob(str(RESULTS / pat))):
         base = os.path.basename(rf)
@@ -79,7 +86,7 @@ def agg_curve(ax, data, w, color, label, ylabel):
     ax.grid(alpha=0.25)
 
 
-def fig1_convergence(dqn, ppo):
+def fig1_convergence(dqn, ppo, state_mode):
     """Compact 2x2 figure for the report: columns DQN | PPO, rows reward |
     success rate."""
     (dqn_r, dqn_s, dqn_seeds) = dqn
@@ -87,8 +94,9 @@ def fig1_convergence(dqn, ppo):
 
     fig, ax = plt.subplots(2, 2, figsize=(10, 6))
     sig = DQN_CFG[1]
-    fig.suptitle(f"Convergence on A1_grid (GPS, $\\sigma$={sig}), "
-                 f"mean $\\pm$ std over {len(dqn_seeds)} seeds", fontsize=12)
+    fig.suptitle(f"Convergence on A1_grid ({MODE_LABEL[state_mode]}, "
+                 f"$\\sigma$={sig}), mean $\\pm$ std over {len(dqn_seeds)} seeds",
+                 fontsize=12)
 
     agg_curve(ax[0, 0], dqn_r, DQN_SMOOTH, DQN_COLOR, "DQN", "Episode reward")
     agg_curve(ax[0, 1], ppo_r, PPO_SMOOTH, PPO_COLOR, "PPO", "Episode reward")
@@ -100,17 +108,19 @@ def fig1_convergence(dqn, ppo):
         a.set_ylim(-0.02, 1.02)
 
     fig.tight_layout(rect=(0, 0, 1, 0.96))
-    out = RESULTS / "fig1_convergence.png"
+    suffix = "" if state_mode == "gps" else f"_{state_mode}"
+    out = RESULTS / f"fig1_convergence{suffix}.png"
     fig.savefig(out, dpi=150)
     plt.close(fig)
     print(f"saved {out}")
 
 
-def single_panels(dqn, ppo):
+def single_panels(dqn, ppo, state_mode):
     """Standalone version of each panel — kept as separate assets (slides,
     space-tight layouts). Not all of these go in the report."""
     (dqn_r, dqn_s, _) = dqn
     (ppo_r, ppo_s, _) = ppo
+    suffix = "" if state_mode == "gps" else f"_{state_mode}"
     panels = [
         ("dqn_reward",  dqn_r, DQN_SMOOTH, DQN_COLOR, "DQN",  "Episode reward"),
         ("dqn_success", dqn_s, DQN_SMOOTH, DQN_COLOR, "DQN",  "Success rate"),
@@ -120,20 +130,27 @@ def single_panels(dqn, ppo):
     for name, data, w, color, label, ylabel in panels:
         fig, a = plt.subplots(figsize=(5, 3.2))
         agg_curve(a, data, w, color, label, ylabel)
-        a.set_title(f"{label} (A1_grid, GPS, $\\sigma$={DQN_CFG[1]})")
+        a.set_title(f"{label} (A1_grid, {MODE_LABEL[state_mode]}, "
+                    f"$\\sigma$={DQN_CFG[1]})")
         if "success" in name:
             a.set_ylim(-0.02, 1.02)
         fig.tight_layout()
-        out = RESULTS / f"fig1_{name}.png"
+        out = RESULTS / f"fig1_{name}{suffix}.png"
         fig.savefig(out, dpi=150)
         plt.close(fig)
         print(f"saved {out}")
 
 
 if __name__ == "__main__":
-    dqn = load_runs(*DQN_CFG)
-    ppo = load_runs(*PPO_CFG)
-    print(f"DQN: {len(dqn[2])} seeds {dqn[2]} | final success {dqn[1][:, -50:].mean():.3f}")
-    print(f"PPO: {len(ppo[2])} seeds {ppo[2]} | final success {ppo[1][:, -50:].mean():.3f}")
-    fig1_convergence(dqn, ppo)
-    single_panels(dqn, ppo)
+    ap = argparse.ArgumentParser(description="Aggregated convergence figures.")
+    ap.add_argument("--state_mode", choices=["gps", "raycasting", "both"],
+                    default="gps", help="Which state representation to plot.")
+    args = ap.parse_args()
+
+    sm = args.state_mode
+    dqn = load_runs(DQN_CFG[0], sm, DQN_CFG[1], DQN_CFG[2], DQN_CFG[3])
+    ppo = load_runs(PPO_CFG[0], sm, PPO_CFG[1], PPO_CFG[2], PPO_CFG[3])
+    print(f"[{sm}] DQN: {len(dqn[2])} seeds {dqn[2]} | final success {dqn[1][:, -50:].mean():.3f}")
+    print(f"[{sm}] PPO: {len(ppo[2])} seeds {ppo[2]} | final success {ppo[1][:, -50:].mean():.3f}")
+    fig1_convergence(dqn, ppo, sm)
+    single_panels(dqn, ppo, sm)
