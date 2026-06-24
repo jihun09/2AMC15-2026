@@ -25,7 +25,7 @@
 set -e
 
 GRID="grid_configs/A1_grid.npy"
-EPISODES=(500 2000)
+EPISODES=(3000)
 MAX_STEPS=(500 2000)
 STATE_MODE=gps
 SIGMAS=(0 0.1)
@@ -34,7 +34,7 @@ SEEDS=(0 42)
 GAMMA=0.99
 HIDDEN_SIZE=256
 LR_DQN=(0.0001 0.0005 0.001)
-LR_PPO=(0.0003 0.0005 0.001)
+LR_PPO=(0.0005)
 
 RESULTS_FILE="results/dqn_ppo_sweep_results.txt"
 mkdir -p results
