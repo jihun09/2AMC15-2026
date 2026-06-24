@@ -156,42 +156,40 @@ def fig1_convergence(dqn, ppo, state_mode):
     print(f"saved {out}")
 
 
-def fig_sigma_comparison_single(algo_label, cfg, w, colors, state_mode):
-    """One figure (reward | success rate) for a single algo, overlaying its
-    sigma=0.0 vs sigma=0.1 lines, each with its own mean +/- std band."""
-    algo, _, lr, hidden, episodes, max_steps = cfg
-    fig, (ax_r, ax_s) = plt.subplots(1, 2, figsize=(12, 5))
-    for sigma in SIGMAS:
-        try:
-            R, S, seeds = load_runs(algo, state_mode, sigma, lr, hidden, episodes, max_steps)
-        except FileNotFoundError as e:
-            print(f"[skip] {e}")
-            continue
-        label = f"$\\sigma$={sigma} (n={len(seeds)})"
-        agg_curve(ax_r, R, w, colors[sigma], label, "Episode reward", SIGMA_LINESTYLES[sigma])
-        agg_curve(ax_s, S, w, colors[sigma], label, "Success rate", SIGMA_LINESTYLES[sigma])
+def fig_sigma_comparison(state_mode):
+    """Single 2x2 figure: columns DQN | PPO, rows reward | success rate.
+    Each panel overlays that algo's sigma=0.0 vs sigma=0.1 lines (own mean
+    +/- std band each). DQN episode length comes from DQN_CFG, PPO's from
+    PPO_CFG (they differ: DQN converges fast, PPO needs far more episodes)."""
+    fig, ax = plt.subplots(2, 2, figsize=(12, 9))
+    configs = [
+        ("DQN", DQN_CFG, DQN_SMOOTH, DQN_SIGMA_COLORS, 0),
+        ("PPO", PPO_CFG, PPO_SMOOTH, PPO_SIGMA_COLORS, 1),
+    ]
+    for algo_label, cfg, w, colors, col in configs:
+        algo, _, lr, hidden, episodes, max_steps = cfg
+        for sigma in SIGMAS:
+            try:
+                R, S, seeds = load_runs(algo, state_mode, sigma, lr, hidden, episodes, max_steps)
+            except FileNotFoundError as e:
+                print(f"[skip] {e}")
+                continue
+            label = f"$\\sigma$={sigma} (n={len(seeds)})"
+            agg_curve(ax[0, col], R, w, colors[sigma], label, "Episode reward", SIGMA_LINESTYLES[sigma])
+            agg_curve(ax[1, col], S, w, colors[sigma], label, "Success rate", SIGMA_LINESTYLES[sigma])
+        ax[0, col].set_title(f"{algo_label} ({episodes} episodes)")
+        ax[0, col].legend(fontsize=9)
+        ax[1, col].legend(fontsize=9)
+        ax[1, col].set_ylim(-0.02, 1.02)
 
-    ax_r.legend(fontsize=9)
-    ax_s.legend(fontsize=9)
-    ax_s.set_ylim(-0.02, 1.02)
-    fig.suptitle(f"{algo_label} across $\\sigma$ on A1_grid ({MODE_LABEL[state_mode]}), "
-                 f"mean $\\pm$ std over seeds ({episodes} episodes)",
-                 fontsize=11)
-    fig.tight_layout(rect=(0, 0, 1, 0.93))
+    fig.suptitle(f"DQN vs PPO across $\\sigma$ on A1_grid ({MODE_LABEL[state_mode]}), "
+                 f"mean $\\pm$ std over seeds", fontsize=13)
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
     suffix = "" if state_mode == "gps" else f"_{state_mode}"
-    out = RESULTS / f"fig_sigma_comparison_{algo_label.lower()}{suffix}.png"
+    out = RESULTS / f"fig_sigma_comparison{suffix}.png"
     fig.savefig(out, dpi=150)
     plt.close(fig)
     print(f"saved {out}")
-
-
-def fig_sigma_comparison(state_mode):
-    """Separate per-algo figures (one for DQN, one for PPO), each comparing
-    sigma=0.0 vs sigma=0.1. DQN episode length comes from DQN_CFG, PPO's
-    from PPO_CFG (they differ: DQN converges fast, PPO needs far more
-    episodes to converge)."""
-    fig_sigma_comparison_single("DQN", DQN_CFG, DQN_SMOOTH, DQN_SIGMA_COLORS, state_mode)
-    fig_sigma_comparison_single("PPO", PPO_CFG, PPO_SMOOTH, PPO_SIGMA_COLORS, state_mode)
 
 
 def single_panels(dqn, ppo, state_mode):
