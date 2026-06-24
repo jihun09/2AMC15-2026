@@ -10,8 +10,12 @@ class ContinuousEnv:
 
     Three modes are available:
       - 'gps':        normalized (row, col) coordinates — state_dim = 2
-      - 'raycasting': 8-directional sensor (distance + target flag) — state_dim = 16
-      - 'both':       GPS + raycasting concatenated — state_dim = 18
+      - 'raycasting': 8-directional distance sensor — state_dim = 8
+      - 'both':       GPS + raycasting concatenated — state_dim = 10
+
+    Note: the raycasting sensor returns only obstacle distances and does NOT
+    identify the target (no target-vs-obstacle flag), to comply with the
+    assignment rule against features that reveal the optimal action.
 
     Args:
         env:       The base Environment to wrap.
@@ -25,7 +29,7 @@ class ContinuousEnv:
         self.n_actions = 8
         self.mode = mode
         self.max_range = max_range
-        self.state_dim = {"gps": 2, "raycasting": 16, "both": 18}[mode]
+        self.state_dim = {"gps": 2, "raycasting": 8, "both": 10}[mode]
 
     def _get_gps(self, agent_pos) -> np.ndarray:
         """Normalized GPS coordinates (row/n_rows, col/n_cols). Shape (2,)."""
@@ -34,11 +38,14 @@ class ContinuousEnv:
         return np.array([row / n_rows, col / n_cols], dtype=np.float32)
 
     def _get_raycasting(self, agent_pos, grid) -> np.ndarray:
-        """8-directional raycasting: (normalized_distance, target_flag) per direction.
-        
-        The sensor does NOT distinguish walls from obstacles (both return flag 0.0).
-        Only the target returns flag 1.0. max_range limits the ray length if set.
-        Shape (16,).
+        """8-directional raycasting: normalized distance to the nearest blocking
+        cell per direction.
+
+        The sensor reports only distances and does NOT identify what it hit:
+        walls, obstacles and the target are indistinguishable. This deliberately
+        avoids a target-vs-obstacle flag, which would reveal the optimal action
+        and is disallowed by the assignment. max_range limits the ray length if
+        set. Shape (8,).
         """
         directions = [
             (0, 1),   # Down
@@ -56,22 +63,18 @@ class ContinuousEnv:
         for dx, dy in directions:
             dist = 0
             x, y = agent_pos
-            hit_obstacle = False
 
             while True:
                 x += dx
                 y += dy
                 dist += 1
-                if grid[x, y] != 0:  # hit wall, obstacle or target
-                    hit_obstacle = True
+                if grid[x, y] != 0:  # hit wall, obstacle or target (unlabeled)
                     break
                 if self.max_range is not None and dist >= self.max_range:
                     break  # reached sensor range limit
 
             norm_dist = dist / max_dist
-            is_target = 1.0 if (hit_obstacle and grid[x, y] == 3) else 0.0
             readings.append(norm_dist)
-            readings.append(is_target)
 
         return np.array(readings, dtype=np.float32)
 

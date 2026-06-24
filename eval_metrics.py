@@ -3,14 +3,30 @@ import csv
 import random
 
 import numpy as np
+import torch
+from torch.distributions import Categorical
 
 from world.continuous_env import ContinuousEnv
 from utils import compute_bfs_distances
 
 
+def _pick_action(agent, state, deterministic: bool) -> int:
+    """Choose an eval action. deterministic=True keeps the original greedy
+    behaviour; deterministic=False samples a PPO action from the policy
+    distribution (no rollout-buffer side effects), used as a diagnostic to
+    see whether greedy eval gets stuck in loops at sigma=0."""
+    if hasattr(agent, "select_action"):              # PPO
+        if deterministic:
+            return agent.select_action(state, training=False)
+        with torch.no_grad():
+            logits, _ = agent.policy(agent._encode(state))
+            return int(Categorical(logits=logits).sample().item())
+    return agent.take_action(state)                  # DQN (always greedy)
+
+
 def evaluate_policy(agent, base_env, state_mode, max_range, start_pos,
                     n_episodes: int = 100, max_steps: int = 500,
-                    bfs_dist=None) -> dict:
+                    bfs_dist=None, deterministic: bool = True) -> dict:
     
     start_pos = tuple(int(x) for x in start_pos)
     # Reset to a pristine grid first: a consumed target would make BFS infinite.
@@ -33,10 +49,7 @@ def evaluate_policy(agent, base_env, state_mode, max_range, start_pos,
     for _ in range(n_episodes):
         state = eval_env.reset(agent_start_pos=start_pos)
         for step in range(max_steps):
-            if hasattr(agent, "select_action"):          # PPO
-                action = agent.select_action(state, training=False)
-            else:                                        # DQN
-                action = agent.take_action(state)
+            action = _pick_action(agent, state, deterministic)
             state, _, done, _ = eval_env.step(action)
             if done:
                 steps = step + 1
