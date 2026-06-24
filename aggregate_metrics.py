@@ -7,10 +7,9 @@ import numpy as np
 
 PATH = Path("results/a2_summary_metrics.csv")
 OUT_PATH = Path("results/aggregated_by_sigma.csv")
-
-FILTER_ALGO = "dqn"
-FILTER_STATE_MODE = "gps"
-EPISODES = 1500
+FILTER_ALGO = "PPO"
+FILTER_STATE_MODE = "both"
+EPISODES = 3000
 MAX_STEPS = 500
 
 FIELDNAMES = [

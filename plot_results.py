@@ -8,6 +8,7 @@ Usage:
     python plot_results.py            # writes results/fig1_convergence.png and saves also the single panels as separate assets
 """
 import argparse
+import csv
 import glob
 import os
 import re
@@ -20,16 +21,27 @@ import matplotlib.pyplot as plt
 
 RESULTS = Path("results")
 
-# Config per method shown in the convergence figure: (algo, sigma, lr, hidden, episodes).
-# hidden filters out stray runs of a different network size (None = any).
-# episodes filters out stray runs of a different training length (None = any);
-# encoded in filenames as "_e{episodes}_" (e.g. dqn_..._e1500_rangefull_rewards.npy).
-DQN_CFG = ("dqn", "0.1", "0.0005", "256", "500")
-PPO_CFG = ("ppo", "0.1", "0.0005", "256", "500")
+# Config per method shown in the convergence figure: (algo, sigma, lr, hidden,
+# episodes, max_steps). hidden/episodes filter out stray runs of a different
+# network size / training length (None = any); episodes is encoded in
+# filenames as "_e{episodes}_" (e.g. dqn_..._e1500_rangefull_rewards.npy).
+# max_steps is only filtered for PPO (DQN_CFG leaves it None = any) since
+# only PPO's max_steps sweep is relevant here.
+DQN_CFG = ("dqn", "0.1", "0.0005", "256", "1500", None)
+PPO_CFG = ("ppo", "0.1", "0.0005", "256", "3000", "500")
 DQN_SMOOTH = 20
 PPO_SMOOTH = 50
 DQN_COLOR = "#1f77b4"
 PPO_COLOR = "#d62728"
+
+# Sigma-comparison figure: two lines per algo (sigma=0.0 vs sigma=0.1).
+# Distinct hues (not light/dark shades of the same color) plus different
+# linestyles, so the two lines stay readable even against the shaded bands
+# or in grayscale.
+SIGMAS = ("0.0", "0.1")
+DQN_SIGMA_COLORS = {"0.0": "#2ca02c", "0.1": "#1f77b4"}   # green vs blue
+PPO_SIGMA_COLORS = {"0.0": "#9467bd", "0.1": "#d62728"}   # purple vs red
+SIGMA_LINESTYLES = {"0.0": "--", "0.1": "-"}
 
 # How each state mode is labelled in titles.
 MODE_LABEL = {"gps": "GPS", "raycasting": "raycasting", "both": "GPS+raycasting"}
@@ -47,7 +59,7 @@ def smooth(x: np.ndarray, w: int) -> np.ndarray:
     return np.concatenate([head, body])
 
 
-def load_runs(algo, state_mode, sigma, lr, hidden=None, episodes=None):
+def load_runs(algo, state_mode, sigma, lr, hidden=None, episodes=None, max_steps=None):
     """Stack per-seed reward and success arrays for one config. Returns
     (rewards[n_seeds, T], successes[n_seeds, T], seeds[list]).
 
@@ -56,7 +68,12 @@ def load_runs(algo, state_mode, sigma, lr, hidden=None, episodes=None):
     filters on the actual length of the saved rewards array, not the
     filename — older sweeps encoded training length inconsistently
     ("_e{N}_", "_episodes{N}_max_steps{M}_", or not at all), but the .npy
-    array length is always ground truth for how many episodes were run."""
+    array length is always ground truth for how many episodes were run.
+
+    max_steps is checked against the "_max_steps{N}_" filename tag when
+    present (older PPO sweep); if a filename has no such tag, falls back to
+    the companion "_training.csv"'s max "steps" value as ground truth (any
+    timed-out episode hits exactly --max_steps)."""
     pat = f"{algo}_*_{state_mode}_seed*_sigma{sigma}_lr{lr}_*_rewards.npy"
     rewards, succ, seeds = [], [], []
     for rf in sorted(glob.glob(str(RESULTS / pat))):
@@ -69,6 +86,19 @@ def load_runs(algo, state_mode, sigma, lr, hidden=None, episodes=None):
         r = np.load(rf)
         if episodes and len(r) != int(episodes):
             continue
+        if max_steps:
+            tag = f"_max_steps{max_steps}_"
+            if tag not in base:
+                other_tags = "_max_steps" in base
+                if other_tags:
+                    continue       # tagged with a different max_steps value
+                tf = rf.replace("_rewards.npy", "_training.csv")
+                if not os.path.exists(tf):
+                    continue
+                with open(tf, newline="") as fh:
+                    run_max_steps = max(int(row["steps"]) for row in csv.DictReader(fh))
+                if run_max_steps != int(max_steps):
+                    continue
         seed = int(re.search(r"_seed(\d+)_", base).group(1))
         if seed in seeds:           # guard against duplicate runs of same seed
             continue
@@ -77,20 +107,21 @@ def load_runs(algo, state_mode, sigma, lr, hidden=None, episodes=None):
         succ.append(np.load(sf))
     if not rewards:
         raise FileNotFoundError(
-            f"no runs for {algo} sigma{sigma} lr{lr} h{hidden} e{episodes}")
+            f"no runs for {algo} sigma{sigma} lr{lr} h{hidden} e{episodes} "
+            f"max_steps{max_steps}")
     L = min(len(r) for r in rewards)        # align to shortest seed
     R = np.stack([r[:L] for r in rewards])
     S = np.stack([s[:L] for s in succ])
     return R, S, sorted(seeds)
 
 
-def agg_curve(ax, data, w, color, label, ylabel):
+def agg_curve(ax, data, w, color, label, ylabel, linestyle="-"):
     """Smooth each seed, then plot mean +/- std across seeds vs episode."""
     sm = np.stack([smooth(d, w) for d in data])
     m, sd = sm.mean(0), sm.std(0)
     ep = np.arange(1, len(m) + 1)
-    ax.plot(ep, m, color=color, lw=1.6, label=label)
-    ax.fill_between(ep, m - sd, m + sd, color=color, alpha=0.18)
+    ax.plot(ep, m, color=color, lw=2.0, linestyle=linestyle, label=label)
+    ax.fill_between(ep, m - sd, m + sd, color=color, alpha=0.15)
     ax.set_xlabel("Episode")
     ax.set_ylabel(ylabel)
     ax.grid(alpha=0.25)
@@ -123,6 +154,44 @@ def fig1_convergence(dqn, ppo, state_mode):
     fig.savefig(out, dpi=150)
     plt.close(fig)
     print(f"saved {out}")
+
+
+def fig_sigma_comparison_single(algo_label, cfg, w, colors, state_mode):
+    """One figure (reward | success rate) for a single algo, overlaying its
+    sigma=0.0 vs sigma=0.1 lines, each with its own mean +/- std band."""
+    algo, _, lr, hidden, episodes, max_steps = cfg
+    fig, (ax_r, ax_s) = plt.subplots(1, 2, figsize=(12, 5))
+    for sigma in SIGMAS:
+        try:
+            R, S, seeds = load_runs(algo, state_mode, sigma, lr, hidden, episodes, max_steps)
+        except FileNotFoundError as e:
+            print(f"[skip] {e}")
+            continue
+        label = f"$\\sigma$={sigma} (n={len(seeds)})"
+        agg_curve(ax_r, R, w, colors[sigma], label, "Episode reward", SIGMA_LINESTYLES[sigma])
+        agg_curve(ax_s, S, w, colors[sigma], label, "Success rate", SIGMA_LINESTYLES[sigma])
+
+    ax_r.legend(fontsize=9)
+    ax_s.legend(fontsize=9)
+    ax_s.set_ylim(-0.02, 1.02)
+    fig.suptitle(f"{algo_label} across $\\sigma$ on A1_grid ({MODE_LABEL[state_mode]}), "
+                 f"mean $\\pm$ std over seeds ({episodes} episodes)",
+                 fontsize=11)
+    fig.tight_layout(rect=(0, 0, 1, 0.93))
+    suffix = "" if state_mode == "gps" else f"_{state_mode}"
+    out = RESULTS / f"fig_sigma_comparison_{algo_label.lower()}{suffix}.png"
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    print(f"saved {out}")
+
+
+def fig_sigma_comparison(state_mode):
+    """Separate per-algo figures (one for DQN, one for PPO), each comparing
+    sigma=0.0 vs sigma=0.1. DQN episode length comes from DQN_CFG, PPO's
+    from PPO_CFG (they differ: DQN converges fast, PPO needs far more
+    episodes to converge)."""
+    fig_sigma_comparison_single("DQN", DQN_CFG, DQN_SMOOTH, DQN_SIGMA_COLORS, state_mode)
+    fig_sigma_comparison_single("PPO", PPO_CFG, PPO_SMOOTH, PPO_SIGMA_COLORS, state_mode)
 
 
 def single_panels(dqn, ppo, state_mode):
@@ -158,9 +227,10 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     sm = args.state_mode
-    dqn = load_runs(DQN_CFG[0], sm, DQN_CFG[1], DQN_CFG[2], DQN_CFG[3], DQN_CFG[4])
-    ppo = load_runs(PPO_CFG[0], sm, PPO_CFG[1], PPO_CFG[2], PPO_CFG[3], PPO_CFG[4])
+    dqn = load_runs(DQN_CFG[0], sm, DQN_CFG[1], DQN_CFG[2], DQN_CFG[3], DQN_CFG[4], DQN_CFG[5])
+    ppo = load_runs(PPO_CFG[0], sm, PPO_CFG[1], PPO_CFG[2], PPO_CFG[3], PPO_CFG[4], PPO_CFG[5])
     print(f"[{sm}] DQN: {len(dqn[2])} seeds {dqn[2]} | final success {dqn[1][:, -50:].mean():.3f}")
     print(f"[{sm}] PPO: {len(ppo[2])} seeds {ppo[2]} | final success {ppo[1][:, -50:].mean():.3f}")
     fig1_convergence(dqn, ppo, sm)
     single_panels(dqn, ppo, sm)
+    fig_sigma_comparison(sm)

@@ -192,7 +192,7 @@ def main():
 
     run_name = (
         f"ppo_{args.grid.stem}_{args.state_mode}_seed{args.seed}_sigma{args.sigma}"
-        f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}_e{args.episodes}"
+        f"_lr{args.lr}_g{args.gamma}_h{args.hidden_size}_e{args.episodes}_s{args.max_steps}"
         f"_range{'full' if args.max_range is None else args.max_range}"
     )
     train_csv = results_dir / f"{run_name}_training.csv"
