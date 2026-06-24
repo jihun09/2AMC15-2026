@@ -20,10 +20,12 @@ import matplotlib.pyplot as plt
 
 RESULTS = Path("results")
 
-# Config per method shown in the convergence figure: (algo, sigma, lr, hidden).
+# Config per method shown in the convergence figure: (algo, sigma, lr, hidden, episodes).
 # hidden filters out stray runs of a different network size (None = any).
-DQN_CFG = ("dqn", "0.1", "0.0005", "256")
-PPO_CFG = ("ppo", "0.1", "0.0005", "256")
+# episodes filters out stray runs of a different training length (None = any);
+# encoded in filenames as "_e{episodes}_" (e.g. dqn_..._e1500_rangefull_rewards.npy).
+DQN_CFG = ("dqn", "0.1", "0.0005", "256", "500")
+PPO_CFG = ("ppo", "0.1", "0.0005", "256", "500")
 DQN_SMOOTH = 20
 PPO_SMOOTH = 50
 DQN_COLOR = "#1f77b4"
@@ -45,12 +47,16 @@ def smooth(x: np.ndarray, w: int) -> np.ndarray:
     return np.concatenate([head, body])
 
 
-def load_runs(algo, state_mode, sigma, lr, hidden=None):
+def load_runs(algo, state_mode, sigma, lr, hidden=None, episodes=None):
     """Stack per-seed reward and success arrays for one config. Returns
     (rewards[n_seeds, T], successes[n_seeds, T], seeds[list]).
 
     state_mode ('gps' | 'raycasting' | 'both') is matched literally in the
-    filename, so only runs of that representation are loaded."""
+    filename, so only runs of that representation are loaded. episodes
+    filters on the actual length of the saved rewards array, not the
+    filename — older sweeps encoded training length inconsistently
+    ("_e{N}_", "_episodes{N}_max_steps{M}_", or not at all), but the .npy
+    array length is always ground truth for how many episodes were run."""
     pat = f"{algo}_*_{state_mode}_seed*_sigma{sigma}_lr{lr}_*_rewards.npy"
     rewards, succ, seeds = [], [], []
     for rf in sorted(glob.glob(str(RESULTS / pat))):
@@ -60,14 +66,18 @@ def load_runs(algo, state_mode, sigma, lr, hidden=None):
         sf = rf.replace("_rewards.npy", "_successes.npy")
         if not os.path.exists(sf):
             continue
+        r = np.load(rf)
+        if episodes and len(r) != int(episodes):
+            continue
         seed = int(re.search(r"_seed(\d+)_", base).group(1))
         if seed in seeds:           # guard against duplicate runs of same seed
             continue
         seeds.append(seed)
-        rewards.append(np.load(rf))
+        rewards.append(r)
         succ.append(np.load(sf))
     if not rewards:
-        raise FileNotFoundError(f"no runs for {algo} sigma{sigma} lr{lr} h{hidden}")
+        raise FileNotFoundError(
+            f"no runs for {algo} sigma{sigma} lr{lr} h{hidden} e{episodes}")
     L = min(len(r) for r in rewards)        # align to shortest seed
     R = np.stack([r[:L] for r in rewards])
     S = np.stack([s[:L] for s in succ])
@@ -135,7 +145,7 @@ def single_panels(dqn, ppo, state_mode):
         if "success" in name:
             a.set_ylim(-0.02, 1.02)
         fig.tight_layout()
-        out = RESULTS / f"fig1_{name}{suffix}.png"
+        out = RESULTS / f"figures/fig1_{name}{suffix}.png"
         fig.savefig(out, dpi=150)
         plt.close(fig)
         print(f"saved {out}")
@@ -144,12 +154,12 @@ def single_panels(dqn, ppo, state_mode):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Aggregated convergence figures.")
     ap.add_argument("--state_mode", choices=["gps", "raycasting", "both"],
-                    default="gps", help="Which state representation to plot.")
+                    default="both", help="Which state representation to plot.")
     args = ap.parse_args()
 
     sm = args.state_mode
-    dqn = load_runs(DQN_CFG[0], sm, DQN_CFG[1], DQN_CFG[2], DQN_CFG[3])
-    ppo = load_runs(PPO_CFG[0], sm, PPO_CFG[1], PPO_CFG[2], PPO_CFG[3])
+    dqn = load_runs(DQN_CFG[0], sm, DQN_CFG[1], DQN_CFG[2], DQN_CFG[3], DQN_CFG[4])
+    ppo = load_runs(PPO_CFG[0], sm, PPO_CFG[1], PPO_CFG[2], PPO_CFG[3], PPO_CFG[4])
     print(f"[{sm}] DQN: {len(dqn[2])} seeds {dqn[2]} | final success {dqn[1][:, -50:].mean():.3f}")
     print(f"[{sm}] PPO: {len(ppo[2])} seeds {ppo[2]} | final success {ppo[1][:, -50:].mean():.3f}")
     fig1_convergence(dqn, ppo, sm)

@@ -6,36 +6,105 @@ from pathlib import Path
 import numpy as np
 
 PATH = Path("results/a2_summary_metrics.csv")
-CONFIG = ["algo", "state_mode", "sigma", "lr", "episodes"]
+OUT_PATH = Path("results/aggregated_by_sigma.csv")
+
+FILTER_ALGO = "dqn"
+FILTER_STATE_MODE = "gps"
+EPISODES = 1500
+MAX_STEPS = 500
+
+FIELDNAMES = [
+    "sigma", "n_seeds",
+    "sum_n_success", "total_episodes",
+    "mean_success_rate", "std_success_rate",
+    "mean_path_eff", "std_path_eff", "n_path_eff",
+    "mean_steps_success", "n_steps_success",
+]
 
 
 def main():
     if not PATH.exists():
         print(f"No summary file at {PATH} yet.")
         return
-    rows = list(csv.DictReader(open(PATH)))
-    groups = defaultdict(list)
+    all_rows = list(csv.DictReader(open(PATH)))
+    rows = [r for r in all_rows
+            if r["algo"] == FILTER_ALGO and r["state_mode"] == FILTER_STATE_MODE and int(r["episodes"]) == EPISODES and int(r["max_steps"]) == MAX_STEPS]
+    by_sigma = defaultdict(list)
     for r in rows:
-        groups[tuple(r[k] for k in CONFIG)].append(r)
+        print(r)
+        by_sigma[r["sigma"]].append(r)
 
-    print(f"\nAggregated over seeds  ({PATH}, {len(rows)} runs)\n")
-    hdr = (f"{'algo':4} {'state':4} {'sigma':5} {'lr':8} {'eps':5} {'n':2} | "
-           f"{'success_rate':22} | {'path_efficiency':22} | per-seed success")
+    if not rows:
+        print(f"No rows match algo={FILTER_ALGO} state_mode={FILTER_STATE_MODE} episodes={EPISODES} max_steps={MAX_STEPS} in {PATH}.")
+        return
+
+    print(f"\nFilter: algo={FILTER_ALGO} state_mode={FILTER_STATE_MODE}  "
+          f"({len(rows)}/{len(all_rows)} runs)")
+    print(f"Summed over seeds (mean where a sum isn't meaningful), "
+          f"grouped by sigma  ({PATH})\n")
+    hdr = (f"{'sigma':5} {'n_seeds':7} | {'sum n_success/total':19} | "
+           f"{'success_rate':22} | {'path_efficiency':26} | mean_steps_success")
     print(hdr)
     print("-" * len(hdr))
-    for key in sorted(groups):
-        g = sorted(groups[key], key=lambda x: int(x["seed"]))
+
+    out_rows = []
+    for sigma in sorted(by_sigma, key=float):
+        g = by_sigma[sigma]
         sr = np.array([float(x["success_rate"]) for x in g])
-        # path efficiency only over seeds that actually solved it (success > 0);
-        # a failed seed has no path, so its 0 would conflate the two metrics.
-        pe = np.array([float(x["mean_path_eff"]) for x in g if float(x["success_rate"]) > 0])
-        n = len(g)
-        sr_s = f"{sr.mean():.3f} +/- {sr.std(ddof=1 if n > 1 else 0):.3f}"
-        pe_s = (f"{pe.mean():.3f} +/- {pe.std(ddof=1 if pe.size > 1 else 0):.3f} (n={pe.size})"
-                if pe.size else "n/a (no successes)")
-        algo, state, sigma, lr, eps = key
-        per_seed = ", ".join(f"s{x['seed']}={float(x['success_rate']):.2f}" for x in g)
-        print(f"{algo:4} {state:4} {sigma:5} {lr:8} {eps:5} {n:2} | {sr_s:22} | {pe_s:26} | {per_seed}")
+        n_success = np.array([int(x["n_success"]) for x in g])
+        eval_episodes = np.array([int(x["eval_episodes"]) for x in g])
+        n_seeds = len(g)
+
+        sum_n_success = int(n_success.sum())
+        total_episodes = int(eval_episodes.sum())
+        # success_rate = successes / n_episodes, applied to the pooled totals
+        # across every seed (not an average of per-seed ratios).
+        mean_sr = sum_n_success / total_episodes
+        std_sr = sr.std(ddof=1 if n_seeds > 1 else 0)
+
+        # mean_path_eff / std_path_eff / mean_steps_success are each computed
+        # per-seed as mean()/std() over that seed's per-episode success_ratios
+        # (resp. success_steps). To get the true pooled statistic over every
+        # successful episode across all seeds — not just an unweighted mean of
+        # per-seed means — combine the per-seed (count, mean, std) triples
+        # weighted by each seed's n_success.
+        mask = n_success > 0
+        if mask.any():
+            w = n_success[mask].astype(float)
+            pe_means = np.array([float(x["mean_path_eff"]) for x in g])[mask]
+            pe_stds = np.array([float(x["std_path_eff"]) for x in g])[mask]
+            step_means = np.array([float(x["mean_steps_success"]) for x in g])[mask]
+
+            mean_pe = float(np.sum(w * pe_means) / np.sum(w))
+            pooled_var_pe = np.sum(w * (pe_stds ** 2 + (pe_means - mean_pe) ** 2)) / np.sum(w)
+            std_pe = float(np.sqrt(pooled_var_pe))
+            mean_steps = float(np.sum(w * step_means) / np.sum(w))
+        else:
+            mean_pe = std_pe = mean_steps = None
+        pe_size = mask.sum()
+        steps_size = mask.sum()
+
+        sr_s = f"{mean_sr:.3f} +/- {std_sr:.3f}"
+        pe_s = (f"{mean_pe:.3f} +/- {std_pe:.3f} (n={pe_size})"
+                if pe_size else "n/a (no successes)")
+        steps_s = f"{mean_steps:.1f}" if steps_size else "n/a"
+        print(f"{sigma:5} {n_seeds:7} | {f'{sum_n_success}/{total_episodes}':19} | "
+              f"{sr_s:22} | {pe_s:26} | {steps_s}")
+
+        out_rows.append({
+            "sigma": sigma, "n_seeds": n_seeds,
+            "sum_n_success": sum_n_success, "total_episodes": total_episodes,
+            "mean_success_rate": mean_sr, "std_success_rate": std_sr,
+            "mean_path_eff": mean_pe, "std_path_eff": std_pe, "n_path_eff": pe_size,
+            "mean_steps_success": mean_steps, "n_steps_success": steps_size,
+        })
+
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(OUT_PATH, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=FIELDNAMES)
+        w.writeheader()
+        w.writerows(out_rows)
+    print(f"\nSaved: {OUT_PATH}")
 
 
 if __name__ == "__main__":

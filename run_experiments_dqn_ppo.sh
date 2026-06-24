@@ -25,15 +25,15 @@
 set -e
 
 GRID="grid_configs/A1_grid.npy"
-EPISODES=(3000)
-MAX_STEPS=(500 2000)
+EPISODES=(1500)
+MAX_STEPS=(500)
 STATE_MODE=gps
 SIGMAS=(0 0.1)
 START_POS="1,12"
-SEEDS=(0 42)
+SEEDS=(0 1 2 3 4 5 6 7 8 42)
 GAMMA=0.99
 HIDDEN_SIZE=256
-LR_DQN=(0.0001 0.0005 0.001)
+LR_DQN=(0.0005)
 LR_PPO=(0.0005)
 
 RESULTS_FILE="results/dqn_ppo_sweep_results.txt"
@@ -59,26 +59,23 @@ run_ppo() {
 }
 
 
-# PPO
-
-echo ">>> PPO runs"
 
 
-for SEED in "${SEEDS[@]}"; do
-    for LR in "${LR_PPO[@]}"; do
+echo ">>> DQN runs"
+
+for LR in "${LR_DQN[@]}"; do
+    for SEED in "${SEEDS[@]}"; do
         for SIGMA in "${SIGMAS[@]}"; do
-            for episodes in "${EPISODES[@]}"; do
-                for max_steps in "${MAX_STEPS[@]}"; do
-                     run_ppo "lr=$LR seed=$SEED sigma=$SIGMA episodes=$episodes max_steps=$max_steps" \
-                        --grid "$GRID" --no_gui \
-                        --episodes "$episodes" --max_steps "$max_steps" \
-                        --state_mode "$STATE_MODE" --sigma "$SIGMA" \
-                        --start_pos "$START_POS" --seed "$SEED" \
-                        --lr "$LR" --gamma "$GAMMA" --hidden_size "$HIDDEN_SIZE" \
-                        --clip_eps 0.2 --k_epochs 4 --gae_lambda 0.95 \
-                        --entropy_coef 0.05 --value_coef 0.5 \
-                        --rollout_steps 2048 --minibatch_size 64
-                done
+            for EPISODES in "${EPISODES[@]}"; do
+                run_dqn "lr=$LR seed=$SEED sigma=$SIGMA" \
+                    --grid "$GRID" --no_gui \
+                    --episodes "$EPISODES" --max_steps "$MAX_STEPS" \
+                    --state_mode "$STATE_MODE" --sigma "$SIGMA" \
+                    --start_pos "$START_POS" --seed "$SEED" \
+                    --lr "$LR" --gamma "$GAMMA" --hidden_size "$HIDDEN_SIZE" \
+                    --epsilon 1 --epsilon_decay 0.995 --epsilon_min 0.1 \
+                    --buffer_capacity 50000 --batch_size 64 \
+                    --warmup 1000 --target_update_freq 100
             done
         done
     done
